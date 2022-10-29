@@ -13,3 +13,4 @@ bin
 obj
 Properties/PublishProfiles
 **/.vscode
+*.csproj.user

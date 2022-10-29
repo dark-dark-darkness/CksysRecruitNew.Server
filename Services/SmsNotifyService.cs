@@ -1,30 +1,35 @@
-﻿using CksysRecruitNew.Server.Options;
+﻿using CksysRecruitNew.Server.Models;
+using CksysRecruitNew.Server.Options;
+
 using Microsoft.Extensions.Options;
 
 namespace CksysRecruitNew.Server.Services;
 
-public class SmsNotifyService : INotifyService {
-  private readonly ILogger<SmsNotifyService> _logger;
+public class SmsService {
+  private readonly ILogger<SmsService> _logger;
 
   private readonly SmsOptions _options;
 
-  public SmsNotifyService(ILogger<SmsNotifyService> logger, IOptions<SmsOptions> options) {
+  public SmsService(ILogger<SmsService> logger, IOptions<SmsOptions> options) {
     _logger = logger;
     _options = options.Value;
   }
 
-  public async Task SeedAsync(string phone, string name) {
+  public async Task SeedAsync(SmsSeedParameter parameter) {
     var client = CreateClient(_options.AccessKeyId, _options.AccessKeySecret);
 
     var sendSmsRequest = new AlibabaCloud.SDK.Dysmsapi20170525.Models.SendSmsRequest {
-      SignName = _options.SignName,
-      TemplateCode = _options.TemplateCode,
-      PhoneNumbers = phone,
+      SignName = parameter.SignName,
+      TemplateCode = parameter.TemplateCode,
+      PhoneNumbers = parameter.Phone,
+      TemplateParam = parameter.ParameterString
     };
 
     var runtime = new AlibabaCloud.TeaUtil.Models.RuntimeOptions();
 
-    await client.SendSmsWithOptionsAsync(sendSmsRequest, runtime);
+    var resp = await client.SendSmsWithOptionsAsync(sendSmsRequest, runtime);
+
+    _logger.LogInformation("seed success {@resp}", resp);
   }
 
   private AlibabaCloud.SDK.Dysmsapi20170525.Client CreateClient(string accessKeyId, string accessKeySecret) {

@@ -14,3 +14,5 @@ obj
 Properties/PublishProfiles
 **/.vscode
 *.csproj.user
+Dockerfile
+/Secrents/

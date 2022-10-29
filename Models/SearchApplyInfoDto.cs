@@ -5,8 +5,7 @@ using CksysRecruitNew.Server.Entities;
 
 namespace CksysRecruitNew.Server.Models;
 
-public class SearchApplyInfoDto
-{
+public class SearchApplyInfoDto {
 
   [Display(Name = "学号")]
   public string Id { get; set; } = string.Empty;
@@ -30,8 +29,7 @@ public class SearchApplyInfoDto
   public double Score { get; set; }
 
   public static ApplyInfo FromEntity(ApplyInfo entity)
-    => new()
-    {
+    => new() {
       Id = entity.Id,
       Name = entity.Name,
       ClassName = entity.ClassName,

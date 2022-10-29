@@ -8,10 +8,13 @@ using SqlSugar;
 namespace CksysRecruitNew.Server.Entities;
 
 [SugarTable("t_ApplyInfo")]
-public class ApplyInfo
-{
-  [DisplayName("学号")]
+public class ApplyInfo {
+
   [SugarColumn(IsPrimaryKey = true)]
+  [DisplayName("手机号")]
+  public string Phone { get; set; } = string.Empty;
+
+  [DisplayName("学号")]
   public string Id { get; set; } = string.Empty;
 
   [DisplayName("姓名")]
@@ -19,9 +22,6 @@ public class ApplyInfo
 
   [DisplayName("班级")]
   public string ClassName { get; set; } = string.Empty;
-
-  [DisplayName("手机号")]
-  public string Phone { get; set; } = string.Empty;
 
   [DisplayName("电子邮箱")]
   public string Email { get; set; } = string.Empty;
@@ -35,6 +35,6 @@ public class ApplyInfo
 
   [DisplayName("ip")]
   [SugarColumn(IsNullable = true)]
-  [JsonIgnore] 
+  [JsonIgnore]
   public string? IdAddress { get; set; }
 }

@@ -1,14 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Xml.Linq;
 
 using CksysRecruitNew.Server.Entities;
 
-using SqlSugar;
-
 namespace CksysRecruitNew.Server.Models;
 
-public class CreateUpdateApplyInfoDto
-{
-
+public class UpdateApplyInfoDto {
   [Display(Name = "学号")]
   [Required(ErrorMessage = "请填写{0}")]
   [RegularExpression(@"\d{10}", ErrorMessage = "请输入正确的{0}！")]
@@ -24,11 +21,6 @@ public class CreateUpdateApplyInfoDto
   [MinLength(1, ErrorMessage = "请输入正确的{0}！")]
   public string ClassName { get; set; } = string.Empty;
 
-  [Display(Name = "手机号")]
-  [Required(ErrorMessage = "请填写{0}")]
-  [Phone(ErrorMessage = "请输入正确的{0}！")]
-  public string Phone { get; set; } = string.Empty;
-
   [Display(Name = "电子邮箱")]
   [Required(ErrorMessage = "请填写{0}")]
   [EmailAddress(ErrorMessage = "请输入正确的邮箱地址！")]
@@ -40,15 +32,13 @@ public class CreateUpdateApplyInfoDto
   public string Profile { get; set; } = string.Empty;
 
 
-  public ApplyInfo ToEntity()
-    => new()
-    {
+  public ApplyInfo ToEntity(string phone = "")
+    => new() {
+      Phone = phone,
       Id = Id,
       Name = Name,
       ClassName = ClassName,
-      Phone = Phone,
       Email = Email,
       Profile = Profile,
     };
-
 }

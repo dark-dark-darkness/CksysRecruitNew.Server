@@ -1,5 +1,6 @@
 ﻿using System.Text;
 
+using CksysRecruitNew.Server.Models;
 using CksysRecruitNew.Server.Options;
 
 using MailKit.Net.Smtp;
@@ -10,26 +11,26 @@ using MimeKit;
 
 namespace CksysRecruitNew.Server.Services;
 
-public class EmailNotifyService : INotifyService {
+public class EmailService {
 
   private readonly SmtpClient _client;
 
   private readonly SmtpOptions _options;
 
-  private readonly ILogger<EmailNotifyService> _logger;
+  private readonly ILogger<EmailService> _logger;
 
-  public EmailNotifyService(SmtpClient client, IOptions<SmtpOptions> options, ILogger<EmailNotifyService> logger) {
+  public EmailService(SmtpClient client, IOptions<SmtpOptions> options, ILogger<EmailService> logger) {
     _client = client;
     _options = options.Value;
     _logger = logger;
   }
 
-  public async Task SeedAsync(string address, string name) {
+  public async Task SeedAsync(string email, string name) {
     var message = new MimeMessage();
 
     message.From.Add(new MailboxAddress(_options.Name, _options.Address));
 
-    message.To.Add(new MailboxAddress("申请人", address));
+    message.To.Add(new MailboxAddress("申请人", name));
 
     message.Subject = "创客实验室招新";
 
@@ -58,7 +59,7 @@ public class EmailNotifyService : INotifyService {
     message.Body = bodyBuilder.ToMessageBody();
     await _client.SendAsync(message);
 
-    _logger.LogInformation("Send to {Name}({Address}) success", name, address);
+    _logger.LogInformation("Send to {Name}({Address}) success", name, email);
 
   }
 

@@ -2,8 +2,7 @@
 
 namespace CksysRecruitNew.Server.Models;
 
-public class SearchApplyInfoPageDto
-{
+public class SearchApplyInfoPageDto {
   public int Total { get; set; }
 
   public int PageNumber { get; set; } = 1;

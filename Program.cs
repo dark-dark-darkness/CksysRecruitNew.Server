@@ -11,6 +11,7 @@ using CksysRecruitNew.Server.Repositories;
 using CksysRecruitNew.Server.Services;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -36,6 +37,7 @@ var services = builder.Services;
 services.AddSmtpClient();
 services.AddSwaggerGen();
 services.AddSingleton<JwtHelper>();
+services.AddSingleton<AesHelper>();
 
 services.AddControllers()
         .ConfigureApiBehaviorOptions(options => {
@@ -61,14 +63,14 @@ services.AddAuthorization();
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
           options.TokenValidationParameters = new TokenValidationParameters() {
-            ValidateIssuer = true,                                                                                       //是否验证Issuer
+            ValidateIssuer = true,                                                                                              //是否验证Issuer
             ValidIssuer = builder.Configuration["JwtOptions:Issuer"],                                                           //发行人Issuer
-            ValidateAudience = true,                                                                                     //是否验证Audience
+            ValidateAudience = true,                                                                                            //是否验证Audience
             ValidAudience = builder.Configuration["JwtOptions:Audience"],                                                       //订阅人Audience
-            ValidateIssuerSigningKey = true,                                                                             //是否验证SecurityKey
+            ValidateIssuerSigningKey = true,                                                                                    //是否验证SecurityKey
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtOptions:SecretKey"])), //SecurityKey
-            ValidateLifetime = true,                                                                                     //是否验证失效时间
-            ClockSkew = TimeSpan.FromSeconds(30),                                                                        //过期时间容错值，解决服务器端时间不同步问题（秒）
+            ValidateLifetime = true,                                                                                            //是否验证失效时间
+            ClockSkew = TimeSpan.FromSeconds(30),                                                                               //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
           };
         });
@@ -80,6 +82,7 @@ services.AddSqlSugarClient(builder.Configuration.GetConnectionString("Default"))
 
 services.Configure<SmtpOptions>(options => builder.Configuration.GetSection(nameof(SmtpOptions)).Bind(options));
 services.Configure<JwtOptions>(options => builder.Configuration.GetSection(nameof(JwtOptions)).Bind(options));
+services.Configure<AesOptions>(options => builder.Configuration.GetSection(nameof(AesOptions)).Bind(options));
 services.Configure<SmsOptions>(options => builder.Configuration.GetSection(nameof(SmsOptions)).Bind(options));
 
 services.AddCors(options => options.AddDefaultPolicy(b => b.SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
@@ -91,13 +94,16 @@ if (app.Environment.IsDevelopment()) {
   app.UseSwaggerUI();
 }
 
-
 app.InitDatabase(typeof(ApplyInfo), typeof(User));
 
 app.UseExceptionHandler(appBuilder => {
   appBuilder.Run(async context => {
     context.Response.StatusCode = 200;
-    await context.Response.WriteAsync(JsonSerializer.Serialize(Result.Error()));
+    var exception = context.Features.Get<IExceptionHandlerFeature>();
+    if (exception is not null) {
+      Log.Error(exception.Error, "{@Endpoint} {string}", exception.Endpoint, exception.Path);
+      await context.Response.WriteAsync(JsonSerializer.Serialize(Result.Error()));
+    }
   });
 });
 
@@ -107,16 +113,21 @@ app.UseAuthentication()
    .UseAuthorization();
 
 app.MapPost("/api/login",
-    async ([FromServices] ISqlSugarClient db, [FromServices] JwtHelper jwtHelper, User user) => {
+    async ([FromServices] ISqlSugarClient db, [FromServices] JwtHelper jwtHelper, [FromServices] AesHelper aesHelper, User user) => {
       var result = await db.Queryable<User>().FirstAsync(u => u.Username == user.Username);
 
-      if (result is not null && user.Password == AesHelper.AESDecrypt(result.Password, "481053212F284CD7A01E77F5F86276DB")) {
+      if (result is not null && user.Password == aesHelper.Decrypt(result.Password)) {
         var token = jwtHelper.CreateToken(result.Username);
         return new { Code = 200, Message = "登录成功", Token = token };
       } else {
         return new { Code = 400, Message = "密码或用户名错误", Token = "" };
       }
     });
+
+if (app.Environment.IsDevelopment()) {
+  app.MapPost("/api/user/{password}",
+      ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
+}
 
 app.MapControllers();
 

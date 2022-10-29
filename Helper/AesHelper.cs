@@ -1,139 +1,83 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
+using CksysRecruitNew.Server.Options;
+
+using Microsoft.Extensions.Options;
+
 namespace CksysRecruitNew.Server.Helper;
 
-class AesHelper {
+public class AesHelper {
 
-  public static string AESEncrypt(string EncryptString, string EncryptKey) {
+  private readonly AesOptions _options;
 
-    if (string.IsNullOrEmpty(EncryptString)) {
-      throw (new Exception("密文不得为空"));
+  public AesHelper(IOptions<AesOptions> options) {
+    _options = options.Value;
+  }
+
+
+  public string Encrypt(string input) {
+    var encryptKey = Encoding.UTF8.GetBytes(_options.EncryptKey);
+
+    using var aesAlg = Aes.Create();
+
+    using var encryptor = aesAlg.CreateEncryptor(encryptKey, aesAlg.IV);
+
+    using var msEncrypt = new MemoryStream();
+
+    using (var csEncrypt = new CryptoStream(msEncrypt,
+        encryptor,
+        CryptoStreamMode.Write))
+
+    using (var swEncrypt = new StreamWriter(csEncrypt)) {
+      swEncrypt.Write(input);
     }
 
 
-    if (string.IsNullOrEmpty(EncryptKey)) {
-      throw (new Exception("密钥不得为空"));
-    }
+    var iv = aesAlg.IV;
 
+    var decryptedContent = msEncrypt.ToArray();
 
-    string m_strEncrypt = "";
+    var result = new byte[iv.Length + decryptedContent.Length];
 
+    Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
 
-    byte[] m_btIV = Convert.FromBase64String("Rkb4jvUy/ye7Cd7k89QQgQ==");
+    Buffer.BlockCopy(decryptedContent,
+        0,
+        result,
+        iv.Length,
+        decryptedContent.Length);
 
+    return Convert.ToBase64String(result);
 
-    Rijndael m_AESProvider = Rijndael.Create();
-
-
-    try {
-
-      byte[] m_btEncryptString = Encoding.Default.GetBytes(EncryptString);
-
-
-      MemoryStream m_stream = new MemoryStream();
-
-
-      CryptoStream m_csstream = new CryptoStream(m_stream, m_AESProvider.CreateEncryptor(Encoding.Default.GetBytes(EncryptKey), m_btIV), CryptoStreamMode.Write);
-
-
-      m_csstream.Write(m_btEncryptString, 0, m_btEncryptString.Length);
-      m_csstream.FlushFinalBlock();
-
-
-      m_strEncrypt = Convert.ToBase64String(m_stream.ToArray());
-
-
-      m_stream.Close();
-      m_stream.Dispose();
-
-
-      m_csstream.Close();
-      m_csstream.Dispose();
-
-    } catch (IOException ex) {
-      throw ex;
-    } catch (CryptographicException ex) {
-      throw ex;
-    } catch (ArgumentException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      throw ex;
-    } finally {
-      m_AESProvider.Clear();
-    }
-
-
-    return m_strEncrypt;
 
   }
 
-  /// <summary>
-  /// AES 解密(高级加密标准，是下一代的加密算法标准，速度快，安全级别高，目前 AES 标准的一个实现是 Rijndael 算法)
-  /// </summary>
-  /// <param name="DecryptString">待解密密文</param>
-  /// <param name="DecryptKey">解密密钥</param>
-  /// <returns></returns>
-  public static string AESDecrypt(string DecryptString, string DecryptKey) {
+  public string Decrypt(string input) {
+    var fullCipher = Convert.FromBase64String(input);
 
-    if (string.IsNullOrEmpty(DecryptString)) {
-      throw (new Exception("密文不得为空"));
-    }
+    var iv = new byte[16];
+    var cipher = new byte[fullCipher.Length - iv.Length];
 
+    Buffer.BlockCopy(fullCipher, 0, iv, 0, iv.Length);
+    Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, fullCipher.Length - iv.Length);
+    var decryptKey = Encoding.UTF8.GetBytes(_options.EncryptKey);
 
-    if (string.IsNullOrEmpty(DecryptKey)) {
-      throw (new Exception("密钥不得为空"));
-    }
+    using var aesAlg = Aes.Create();
 
+    using var decrypted = aesAlg.CreateDecryptor(decryptKey, iv);
 
-    string m_strDecrypt = "";
+    using var msDecrypt = new MemoryStream(cipher);
 
+    using var csDecrypt = new CryptoStream(msDecrypt, decrypted, CryptoStreamMode.Read);
 
-    byte[] m_btIV = Convert.FromBase64String("Rkb4jvUy/ye7Cd7k89QQgQ==");
+    using var srDecrypt = new StreamReader(csDecrypt);
 
-
-    Rijndael m_AESProvider = Rijndael.Create();
+    var result = srDecrypt.ReadToEnd();
 
 
-    try {
+    return result;
 
-      byte[] m_btDecryptString = Convert.FromBase64String(DecryptString);
-
-
-      MemoryStream m_stream = new MemoryStream();
-
-
-      CryptoStream m_csstream = new CryptoStream(m_stream, m_AESProvider.CreateDecryptor(Encoding.Default.GetBytes(DecryptKey), m_btIV), CryptoStreamMode.Write);
-
-
-      m_csstream.Write(m_btDecryptString, 0, m_btDecryptString.Length);
-      m_csstream.FlushFinalBlock();
-
-
-      m_strDecrypt = Encoding.Default.GetString(m_stream.ToArray());
-
-
-      m_stream.Close();
-      m_stream.Dispose();
-
-
-      m_csstream.Close();
-      m_csstream.Dispose();
-
-    } catch (IOException ex) {
-      throw ex;
-    } catch (CryptographicException ex) {
-      throw ex;
-    } catch (ArgumentException ex) {
-      throw ex;
-    } catch (Exception ex) {
-      throw ex;
-    } finally {
-      m_AESProvider.Clear();
-    }
-
-
-    return m_strDecrypt;
 
   }
 }

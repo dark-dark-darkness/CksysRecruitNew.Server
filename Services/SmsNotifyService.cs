@@ -1,11 +1,11 @@
 ﻿using CksysRecruitNew.Server.Options;
-
 using Microsoft.Extensions.Options;
 
 namespace CksysRecruitNew.Server.Services;
 
 public class SmsNotifyService : INotifyService {
   private readonly ILogger<SmsNotifyService> _logger;
+
   private readonly SmsOptions _options;
 
   public SmsNotifyService(ILogger<SmsNotifyService> logger, IOptions<SmsOptions> options) {

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
 using CksysRecruitNew.Server.Entities;
 using CksysRecruitNew.Server.Models;
@@ -8,8 +7,6 @@ using CksysRecruitNew.Server.Services;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
-using MiniExcelLibs;
 
 using SqlSugar;
 

@@ -18,6 +18,8 @@ public interface IApplyInfoRepository {
 
   public Task<List<ApplyInfo>> GetManyAsync(ApplyInfo? info = null, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null);
 
+  public Task<List<ApplyInfo>> GetManyAsync(Expression<Func<ApplyInfo, bool>> whereExpr, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null);
+
   public Task<bool> DeleteAsync(string phone);
 
   public Task<bool> DeleteAsync(Expression<Func<ApplyInfo, bool>> whereExpr);

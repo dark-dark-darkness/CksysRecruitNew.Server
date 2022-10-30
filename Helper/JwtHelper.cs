@@ -9,42 +9,55 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CksysRecruitNew.Server.Helper;
 
+/// <summary>
+/// jwt生成帮助类
+/// </summary>
 public class JwtHelper {
-    private readonly JwtOptions _options;
+  private readonly JwtOptions _options;
 
-    public JwtHelper(IOptions<JwtOptions> options) {
-        _options = options.Value;
-    }
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="options">jwt配置项</param>
+  public JwtHelper(IOptions<JwtOptions> options) {
+    _options = options.Value;
+  }
 
-    public string CreateToken(string username, string role) {
-        // 1. 定义需要使用到的Claims
-        var claims = new[] {
-      new Claim(ClaimTypes.NameIdentifier, username),
-      new Claim(ClaimTypes.Role, role)
-    };
+  /// <summary>
+  /// 创建token
+  /// </summary>
+  /// <param name="username"></param>
+  /// <param name="role"></param>
+  /// <returns></returns>
+  public string CreateToken(string username, string role) {
+    // 1. 定义需要使用到的Claims
+    var claims = new[] {
+        new Claim(ClaimTypes.NameIdentifier, username),
+        new Claim(ClaimTypes.Role, role)
+      };
 
-        // 2. 从 appsettings.json 中读取SecretKey
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
+    // 2. 从 appsettings.json 中读取SecretKey
+    var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
 
-        // 3. 选择加密算法
-        var algorithm = SecurityAlgorithms.HmacSha256;
+    // 3. 选择加密算法
+    var algorithm = SecurityAlgorithms.HmacSha256;
 
-        // 4. 生成Credentials
-        var signingCredentials = new SigningCredentials(secretKey, algorithm);
+    // 4. 生成Credentials
+    var signingCredentials = new SigningCredentials(secretKey, algorithm);
 
-        // 5. 根据以上，生成token
-        var jwtSecurityToken = new JwtSecurityToken(
-            _options.Issuer,             //Issuer
-            _options.Audience,           //Audience
-            claims,                      //Claims,
-            DateTime.Now,                //notBefore
-            DateTime.Now.AddMinutes(30), //expires
-            signingCredentials           //Credentials
-        );
+    // 5. 根据以上，生成token
+    var jwtSecurityToken = new JwtSecurityToken(
+        _options.Issuer,             //Issuer
+        _options.Audience,           //Audience
+        claims,                      //Claims,
+        DateTime.Now,                //notBefore
+        DateTime.Now.AddMinutes(30), //expires
+        signingCredentials           //Credentials
+    );
 
-        // 6. 将token变为string
-        var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+    // 6. 将token变为string
+    var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
 
-        return token;
-    }
+    return token;
+  }
 }

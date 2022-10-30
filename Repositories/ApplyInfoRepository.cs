@@ -9,6 +9,7 @@ namespace CksysRecruitNew.Server.Repositories;
 public class ApplyInfoRepository : IApplyInfoRepository {
   protected readonly ISqlSugarClient db;
 
+
   public ApplyInfoRepository(ISqlSugarClient db) {
     this.db = db;
   }
@@ -27,6 +28,9 @@ public class ApplyInfoRepository : IApplyInfoRepository {
          .WhereIF(!string.IsNullOrWhiteSpace(info?.Phone), e => e.Phone.Contains(info!.Phone))
          .WhereIF(!string.IsNullOrWhiteSpace(info?.Email), e => e.Email.Contains(info!.Email))
          .ToPageListAsync(pageNumber, pageSize, total);
+
+  public Task<List<ApplyInfo>> GetManyAsync(Expression<Func<ApplyInfo, bool>> whereExpr, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null)
+  => db.Queryable<ApplyInfo>().Where(whereExpr).ToPageListAsync(pageNumber, pageSize, total);
 
   public Task<bool> SaveAsync(ApplyInfo info)
     => db.Insertable(info).ExecuteCommandIdentityIntoEntityAsync();

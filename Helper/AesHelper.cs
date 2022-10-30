@@ -7,15 +7,26 @@ using Microsoft.Extensions.Options;
 
 namespace CksysRecruitNew.Server.Helper;
 
+/// <summary>
+/// aes加密帮助类
+/// </summary>
 public class AesHelper {
 
   private readonly AesOptions _options;
 
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="options">帮助类配置项</param>
   public AesHelper(IOptions<AesOptions> options) {
     _options = options.Value;
   }
 
-
+  /// <summary>
+  /// 加密
+  /// </summary>
+  /// <param name="input"></param>
+  /// <returns></returns>
   public string Encrypt(string input) {
     var encryptKey = Encoding.UTF8.GetBytes(_options.EncryptKey);
 
@@ -25,15 +36,11 @@ public class AesHelper {
 
     using var msEncrypt = new MemoryStream();
 
-    using (var csEncrypt = new CryptoStream(msEncrypt,
-        encryptor,
-        CryptoStreamMode.Write))
+    using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
 
     using (var swEncrypt = new StreamWriter(csEncrypt)) {
       swEncrypt.Write(input);
     }
-
-
     var iv = aesAlg.IV;
 
     var decryptedContent = msEncrypt.ToArray();
@@ -42,17 +49,18 @@ public class AesHelper {
 
     Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
 
-    Buffer.BlockCopy(decryptedContent,
-        0,
-        result,
-        iv.Length,
-        decryptedContent.Length);
+    Buffer.BlockCopy(decryptedContent, 0, result, iv.Length, decryptedContent.Length);
 
     return Convert.ToBase64String(result);
 
 
   }
 
+  /// <summary>
+  /// 解密
+  /// </summary>
+  /// <param name="input"></param>
+  /// <returns></returns>
   public string Decrypt(string input) {
     var fullCipher = Convert.FromBase64String(input);
 
@@ -77,7 +85,6 @@ public class AesHelper {
 
 
     return result;
-
 
   }
 }

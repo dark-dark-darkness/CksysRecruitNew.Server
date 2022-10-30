@@ -35,6 +35,7 @@
 
   <PropertyGroup>
     <UserSecretsId>project-8084c8e7-0000-0000-b266-b33f42dd88c0</UserSecretsId>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties secret_1json__JsonSchema="https://beaujs.com/schema.json" /></VisualStudio></ProjectExtensions>

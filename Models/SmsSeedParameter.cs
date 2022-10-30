@@ -12,7 +12,7 @@ public class SmsSeedParameter {
 
 
 
-  public static SmsSeedParameter VerificationCode(string phone, string code)
+  public static SmsSeedParameter Captcha(string phone, string code)
     => new() {
       SignName = "liangjs",
       TemplateCode = "SMS_256725470",

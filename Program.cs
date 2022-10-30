@@ -23,52 +23,59 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("secret.json");
 
 builder.Host.UseSerilog(new LoggerConfiguration().WriteTo.Async(c => {
-    if (builder.Environment.IsProduction()) c.File("/log/app/err.log", Serilog.Events.LogEventLevel.Error);
-    c.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
+  if (builder.Environment.IsProduction()) c.File("/log/app/err.log", Serilog.Events.LogEventLevel.Error);
+  c.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
 
 }).CreateBootstrapLogger());
 
 var services = builder.Services;
 
 services.AddSmtpClient();
-services.AddSwaggerGen();
+services.AddSwaggerGen(options => {
+
+  options.AddSecurityDefinition("Blog.Core", new() {
+    Description = "JWT授权(数据将在请求头中进行传输) 直接在下框中输入Bearer {token}（注意两者之间是一个空格）\"",
+    Name = "Authorization", // jwt默认的参数名称
+  });
+});
+
 services.AddSingleton<JwtHelper>();
 services.AddSingleton<AesHelper>();
 
 services.AddControllers()
         .ConfigureApiBehaviorOptions(options => {
-            options.InvalidModelStateResponseFactory = (context) => {
-                var problamDetails = new ValidationProblemDetails(context.ModelState) {
-                    Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-                    Status = StatusCodes.Status422UnprocessableEntity,
-                    Instance = context.HttpContext.Request.Path,
-                };
-
-                problamDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
-
-                return new OkObjectResult(new {
-                    Code = 422,
-                    Message = "输入参数错误",
-                    Errors = problamDetails.Errors
-                });
+          options.InvalidModelStateResponseFactory = (context) => {
+            var problamDetails = new ValidationProblemDetails(context.ModelState) {
+              Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+              Status = StatusCodes.Status422UnprocessableEntity,
+              Instance = context.HttpContext.Request.Path,
             };
+
+            problamDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+
+            return new OkObjectResult(new {
+              Code = 422,
+              Message = "输入参数错误",
+              Errors = problamDetails.Errors
+            });
+          };
         });
 
 services.AddAuthorization();
 
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
-            options.TokenValidationParameters = new TokenValidationParameters() {
-                ValidateIssuer = true,                                                                                                            //是否验证Issuer
-                ValidIssuer = builder.Configuration[$"{JwtOptions.SectionKey}:Issuer"],                                                           //发行人Issuer
-                ValidateAudience = true,                                                                                                          //是否验证Audience
-                ValidAudience = builder.Configuration[$"{JwtOptions.SectionKey}:Audience"],                                                       //订阅人Audience
-                ValidateIssuerSigningKey = true,                                                                                                  //是否验证SecurityKey
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOptions.SectionKey}:SecretKey"])), //SecurityKey
-                ValidateLifetime = true,                                                                                                          //是否验证失效时间
-                ClockSkew = TimeSpan.FromSeconds(30),                                                                                             //过期时间容错值，解决服务器端时间不同步问题（秒）
-                RequireExpirationTime = true,
-            };
+          options.TokenValidationParameters = new TokenValidationParameters() {
+            ValidateIssuer = true,                                                                                                            //是否验证Issuer
+            ValidIssuer = builder.Configuration[$"{JwtOptions.SectionKey}:Issuer"],                                                           //发行人Issuer
+            ValidateAudience = true,                                                                                                          //是否验证Audience
+            ValidAudience = builder.Configuration[$"{JwtOptions.SectionKey}:Audience"],                                                       //订阅人Audience
+            ValidateIssuerSigningKey = true,                                                                                                  //是否验证SecurityKey
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOptions.SectionKey}:SecretKey"])), //SecurityKey
+            ValidateLifetime = true,                                                                                                          //是否验证失效时间
+            ClockSkew = TimeSpan.FromSeconds(30),                                                                                             //过期时间容错值，解决服务器端时间不同步问题（秒）
+            RequireExpirationTime = true,
+          };
         });
 
 services.AddEndpointsApiExplorer();
@@ -85,39 +92,39 @@ services.Configure<SmtpOptions>(options => builder.Configuration.GetSection(Smtp
 services.AddCors(options => options.AddDefaultPolicy(b => b.SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 
 services.AddHttpsRedirection(options => {
-    options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
-    options.HttpsPort = builder.Environment.IsProduction() ? 443 : 5001;
+  options.RedirectStatusCode = (int)HttpStatusCode.TemporaryRedirect;
+  options.HttpsPort = builder.Environment.IsProduction() ? 443 : 5001;
 });
 
 services.AddHsts(options => {
-    options.Preload = true;
-    options.IncludeSubDomains = true;
-    options.MaxAge = TimeSpan.FromDays(60);
+  options.Preload = true;
+  options.IncludeSubDomains = true;
+  options.MaxAge = TimeSpan.FromDays(60);
 });
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment()) {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+  app.UseSwagger();
+  app.UseSwaggerUI();
 } else {
-    app.UseHsts();
+  app.UseHsts();
 
-    app.UseExceptionHandler(appBuilder => {
-        appBuilder.Run(async context => {
-            context.Response.StatusCode = 200;
-            var exception = context.Features.Get<IExceptionHandlerFeature>();
+  app.UseExceptionHandler(appBuilder => {
+    appBuilder.Run(async context => {
+      context.Response.StatusCode = 200;
+      var exception = context.Features.Get<IExceptionHandlerFeature>();
 
-            if (exception is not null) {
-                Log.Error(exception.Error, "{@Endpoint} {Path}", exception.Endpoint, exception.Path);
-                await context.Response.WriteAsync(JsonSerializer.Serialize(Result.Error()));
-            }
-        });
+      if (exception is not null) {
+        Log.Error(exception.Error, "{@Endpoint} {Path}", exception.Endpoint, exception.Path);
+        await context.Response.WriteAsync(JsonSerializer.Serialize(Result.Error()));
+      }
     });
+  });
 }
 
 
-app.InitDatabase(typeof(ApplyInfo), typeof(User), typeof(PhoneVerificationCode));
+app.InitDatabase(typeof(ApplyInfo), typeof(User), typeof(PhoneCaptcha));
 
 app.UseHttpsRedirection();
 
@@ -128,36 +135,36 @@ app.UseAuthentication()
 
 app.MapPost("/api/login",
     async ([FromServices] ISqlSugarClient db, [FromServices] JwtHelper jwtHelper, [FromServices] AesHelper aesHelper, User user) => {
-        var result = await db.Queryable<User>().FirstAsync(u => u.Username == user.Username);
+      var result = await db.Queryable<User>().FirstAsync(u => u.Username == user.Username);
 
-        if (result is not null && user.Password == aesHelper.Decrypt(result.Password)) {
-            var token = jwtHelper.CreateToken(result.Username, "admin");
-            return new { Code = 200, Message = "登录成功", Token = token };
-        } else {
-            return new { Code = 400, Message = "密码或用户名错误", Token = "" };
-        }
+      if (result is not null && user.Password == aesHelper.Decrypt(result.Password)) {
+        var token = jwtHelper.CreateToken(result.Username, "admin");
+        return new { Code = 200, Message = "登录成功", Token = token };
+      } else {
+        return new { Code = 400, Message = "密码或用户名错误", Token = "" };
+      }
     });
 
 if (app.Environment.IsDevelopment()) {
 
-    app.MapPost("/api/user/{password}",
-        ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
+  app.MapPost("/test/{password}",
+      ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
 
-    app.MapGet("/{code}",
-        async ([FromServices] SmsService notifyService, string code) => {
-            try {
-                await notifyService.SeedAsync(new SmsSeedParameter {
-                    Phone = "18075099144",
-                    ParameterString = $$"""{"code":"{{code}}  "}""",
-                    SignName = "阿里云短信测试",
-                    TemplateCode = "SMS_154950909"
-                });
-            } catch (Exception ex) {
-                Log.Error(ex, "消息发送失败");
-                throw;
-            }
+  app.MapGet("/test/{code}",
+      async ([FromServices] SmsService notifyService, string code) => {
+        try {
+          await notifyService.SeedAsync(new SmsSeedParameter {
+            Phone = "18075099144",
+            ParameterString = $$"""{"code":"{{code}}   "}""",
+            SignName = "阿里云短信测试",
+            TemplateCode = "SMS_154950909"
+          });
+        } catch (Exception ex) {
+          Log.Error(ex, "消息发送失败");
+          throw;
+        }
 
-        });
+      });
 
 }
 

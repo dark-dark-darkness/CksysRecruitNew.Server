@@ -2,6 +2,9 @@
 
 public class AesOptions {
 
-    public const string SectionKey = "AesOptions";
-    public string EncryptKey { get; set; } = string.Empty;
+  public const string SectionKey = "AesOptions";
+  /// <summary>
+  /// 加密密钥
+  /// </summary>
+  public string EncryptKey { get; set; } = string.Empty;
 }

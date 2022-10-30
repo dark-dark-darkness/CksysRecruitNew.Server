@@ -2,6 +2,7 @@
 
 using CksysRecruitNew.Server.Entities;
 using CksysRecruitNew.Server.Models;
+using CksysRecruitNew.Server.Models.ApplyInfos;
 using CksysRecruitNew.Server.Repositories;
 using CksysRecruitNew.Server.Services;
 
@@ -12,6 +13,9 @@ using SqlSugar;
 
 namespace CksysRecruitNew.Server.Controllers;
 
+/// <summary>
+/// 申请信息控制器
+/// </summary>
 [ApiController]
 [Route("api/apply-info")]
 public class ApplyInfoController : ControllerBase {
@@ -21,23 +25,39 @@ public class ApplyInfoController : ControllerBase {
 
   private readonly ILogger<ApplyInfoController> _logger;
 
+  /// <summary>
+  /// 
+  /// </summary>
+  /// <param name="repository"></param>
+  /// <param name="notify"></param>
+  /// <param name="logger"></param>
   public ApplyInfoController(IApplyInfoRepository repository, EmailService notify, ILogger<ApplyInfoController> logger) {
     _repository = repository;
     _notify = notify;
     _logger = logger;
   }
 
-
+  /// <summary>
+  /// 判断学号为id的申请信息是否存在
+  /// </summary>
+  /// <param name="id"></param>
+  /// <returns></returns>
   [HttpGet("exist/{id}")]
   public async Task<Result> ExistAsync(string id) {
     var result = await _repository.GetAsync(id);
     return result is not null ? Result.Ok(true) : Result.NotFound($"学号为{id}的申请没有找到", false);
   }
 
+  /// <summary>
+  /// 保存申请信息
+  /// </summary>
+  /// <param name="dto"></param>
+  /// <returns></returns>
   [HttpPost]
   public async Task<Result> SaveAsync(CreateApplyInfoDto dto) {
     var exists = await _repository.ExistsAsync(info => info.Id == dto.Id);
     if (exists) return Result.BadRequest($"学号为{dto.Id}的申请已经存在");
+
     var entity = dto.ToEntity();
     entity.IdAddress = HttpContext.Connection?.RemoteIpAddress?.ToString();
     var result = await _repository.SaveAsync(entity);
@@ -50,7 +70,11 @@ public class ApplyInfoController : ControllerBase {
     return result ? Result.Ok(result) : Result.BadRequest();
   }
 
-
+  /// <summary>
+  /// 获取申请信息详细信息
+  /// </summary>
+  /// <param name="id">学号</param>
+  /// <returns></returns>
   [Authorize(Roles = "admin")]
   [HttpGet("{id}")]
   public async Task<Result<ApplyInfo>> GetAsync(string id) {
@@ -58,19 +82,28 @@ public class ApplyInfoController : ControllerBase {
     return result is not null ? Result<ApplyInfo>.Ok(result) : Result<ApplyInfo>.NotFound($"学号为{id}的申请没有找到");
   }
 
-
+  /// <summary>
+  /// 获取模糊查询条件分页
+  /// </summary>
+  /// <param name="info"></param>
+  /// <param name="pageSize"></param>
+  /// <param name="pageNumber"></param>
+  /// <returns></returns>
   [Authorize(Roles = "admin")]
   [HttpGet("list")]
-  public async Task<Result<SearchApplyInfoPageDto>> GetPageAsync([FromQuery] ApplyInfo info, [FromQuery] int pageSize = 20, [FromQuery] int pageNumber = 1) {
-    var total = 0;
-    var totalAsync = new RefAsync<int>(total);
-    var list = await _repository.GetManyAsync(info, pageNumber, pageSize, totalAsync);
-    if (totalAsync.Value is 0) Result.NotFound("没有符合条件的数据");
-    var result = new SearchApplyInfoPageDto { Page = list, PageNumber = pageNumber, PageSize = pageSize, Total = totalAsync.Value };
-    return Result<SearchApplyInfoPageDto>.Ok(result);
+  public async Task<Result<ApplyInfoPageDto>> GetPageAsync([FromQuery] SearchApplyInfoDto dto) {
+    var totalAsync = new RefAsync<int>();
+    var page = await _repository.GetManyAsync(dto.ToExpression(), dto.PageNumber, dto.PageSize, totalAsync);
+    if (totalAsync.Value is 0) return Result<ApplyInfoPageDto>.NotFound("没有找到符合条件的数据");
+    return Result<ApplyInfoPageDto>.Ok(new() { Page = page, PageNumber = dto.PageNumber, PageSize = dto.PageSize, Total = totalAsync.Value });
   }
 
-
+  /// <summary>
+  /// 管理员更新信息
+  /// </summary>
+  /// <param name="id"></param>
+  /// <param name="dto"></param>
+  /// <returns></returns>
   [Authorize(Roles = "admin")]
   [HttpPut("{id}")]
   public async Task<Result> UpdateAsync(string id, [FromBody] UpdateApplyInfoDto dto) {
@@ -83,7 +116,11 @@ public class ApplyInfoController : ControllerBase {
     return result ? Result.Ok(result) : Result.BadRequest();
   }
 
-
+  /// <summary>
+  /// 管理员删除信息
+  /// </summary>
+  /// <param name="id"></param>
+  /// <returns></returns>
   [Authorize(Roles = "admin")]
   [HttpDelete("{id}")]
   public async Task<Result> DeleteAsync(string id) {
@@ -93,7 +130,10 @@ public class ApplyInfoController : ControllerBase {
     return Result.Ok();
   }
 
-
+  /// <summary>
+  /// 申请人获取自己的信息
+  /// </summary>
+  /// <returns></returns>
   [Authorize]
   [HttpGet]
   public async Task<Result<ApplyInfo>> GetByAuthAsync() {
@@ -102,7 +142,11 @@ public class ApplyInfoController : ControllerBase {
     return result is not null ? Result<ApplyInfo>.Ok(result) : Result<ApplyInfo>.NotFound($"手机号为{phone}的申请没有找到");
   }
 
-
+  /// <summary>
+  /// 申请人更新自己的信息
+  /// </summary>
+  /// <param name="dto"></param>
+  /// <returns></returns>
   [Authorize]
   [HttpPut]
   public async Task<Result> UpdateByAuthAsync(UpdateApplyInfoDto dto) {

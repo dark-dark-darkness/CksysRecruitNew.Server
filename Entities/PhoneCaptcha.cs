@@ -4,9 +4,9 @@ namespace CksysRecruitNew.Server.Entities;
 
 [SugarTable("t_PhoneCaptcha")]
 public class PhoneCaptcha {
-  public string Phone { get; set; }
+  public string Phone { get; set; } = string.Empty;
 
-  public string Captcha { get; set; }
+  public string Captcha { get; set; } = string.Empty;
 
-  public DateTime ExpiresTime { get; set; } = DateTime.UtcNow.AddMinutes(5);
+  public DateTime ExpiresTime { get; set; } = DateTime.Now.AddMinutes(1);
 }

@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.IO;
+using System.Security.Claims;
 
 using CksysRecruitNew.Server.Entities;
 using CksysRecruitNew.Server.Models;
@@ -8,6 +9,8 @@ using CksysRecruitNew.Server.Services;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+using MiniExcelLibs;
 
 using SqlSugar;
 
@@ -19,11 +22,12 @@ namespace CksysRecruitNew.Server.Controllers;
 [ApiController]
 [Route("api/apply-info")]
 public class ApplyInfoController : ControllerBase {
+
+  #region 私有字段+构造函数
   private readonly IApplyInfoRepository _repository;
-
   private readonly EmailService _notify;
-
   private readonly ILogger<ApplyInfoController> _logger;
+  private readonly ISqlSugarClient _db;
 
   /// <summary>
   /// 
@@ -31,12 +35,15 @@ public class ApplyInfoController : ControllerBase {
   /// <param name="repository"></param>
   /// <param name="notify"></param>
   /// <param name="logger"></param>
-  public ApplyInfoController(IApplyInfoRepository repository, EmailService notify, ILogger<ApplyInfoController> logger) {
+  public ApplyInfoController(IApplyInfoRepository repository, EmailService notify, ILogger<ApplyInfoController> logger, ISqlSugarClient db) {
     _repository = repository;
     _notify = notify;
     _logger = logger;
+    _db = db;
   }
+  #endregion
 
+  #region 公开接口
   /// <summary>
   /// 判断学号为id的申请信息是否存在
   /// </summary>
@@ -59,17 +66,20 @@ public class ApplyInfoController : ControllerBase {
     if (exists) return Result.BadRequest($"学号为{dto.Id}的申请已经存在");
 
     var entity = dto.ToEntity();
-    entity.IdAddress = HttpContext.Connection?.RemoteIpAddress?.ToString();
     var result = await _repository.SaveAsync(entity);
+
     try {
       await _notify.SeedAsync(dto.Email, dto.Name);
     } catch (Exception ex) {
       _logger.LogError(ex, "发送到 {string} 的邮箱 {string} 错误", dto.Name, dto.Email);
       throw;
     }
+
     return result ? Result.Ok(result) : Result.BadRequest();
   }
+  #endregion
 
+  #region 管理员接口
   /// <summary>
   /// 获取申请信息详细信息
   /// </summary>
@@ -91,11 +101,11 @@ public class ApplyInfoController : ControllerBase {
   /// <returns></returns>
   [Authorize(Roles = "admin")]
   [HttpGet("list")]
-  public async Task<Result<ApplyInfoPageDto>> GetPageAsync([FromQuery] SearchApplyInfoDto dto) {
+  public async Task<Result<ApplyInfoPageDto>> GetPageAsync([FromQuery] SearchApplyInfoDto dto, OrderBy scoreOrderBy = OrderBy.None, int pageNumber = 1, int pageSize = 20) {
     var totalAsync = new RefAsync<int>();
-    var page = await _repository.GetManyAsync(dto.ToExpression(), dto.PageNumber, dto.PageSize, totalAsync);
+    var page = await _repository.GetManyAsync(dto.ToExpression(), pageNumber, pageSize, totalAsync, scoreOrderBy);
     if (totalAsync.Value is 0) return Result<ApplyInfoPageDto>.NotFound("没有找到符合条件的数据");
-    return Result<ApplyInfoPageDto>.Ok(new() { Page = page, PageNumber = dto.PageNumber, PageSize = dto.PageSize, Total = totalAsync.Value });
+    return Result<ApplyInfoPageDto>.Ok(new() { Page = page, PageNumber = pageNumber, PageSize = pageSize, Total = totalAsync.Value });
   }
 
   /// <summary>
@@ -110,9 +120,7 @@ public class ApplyInfoController : ControllerBase {
     var exists = await _repository.ExistsAsync(info => info.Id == id);
     if (!exists) return Result.NotFound($"学号为{id}的申请不存在");
     var e = dto.ToEntity();
-    e.IdAddress = HttpContext.Connection?.RemoteIpAddress?.ToString();
     var result = await _repository.UpdateAsync(e);
-
     return result ? Result.Ok(result) : Result.BadRequest();
   }
 
@@ -131,12 +139,28 @@ public class ApplyInfoController : ControllerBase {
   }
 
   /// <summary>
+  /// 管理员导出信息
+  /// </summary>
+  /// <param name="id"></param>
+  /// <returns></returns>
+  [Authorize(Roles = "admin")]
+  [HttpGet("export")]
+  public async Task<ActionResult> ExportAsync() {
+    var ms = new MemoryStream();
+    await ms.SaveAsAsync(await _repository.GetManyAsync());
+    ms.Seek(0, SeekOrigin.Begin);
+    return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.Now}");
+  }
+  #endregion
+
+  #region 申请人接口
+  /// <summary>
   /// 申请人获取自己的信息
   /// </summary>
   /// <returns></returns>
-  [Authorize]
+  [Authorize(Roles = "user")]
   [HttpGet]
-  public async Task<Result<ApplyInfo>> GetByAuthAsync() {
+  public async Task<Result<ApplyInfo>> GetByPhoneAsync() {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
     var result = await _repository.GetAsync(info => info.Phone == phone);
     return result is not null ? Result<ApplyInfo>.Ok(result) : Result<ApplyInfo>.NotFound($"手机号为{phone}的申请没有找到");
@@ -147,9 +171,9 @@ public class ApplyInfoController : ControllerBase {
   /// </summary>
   /// <param name="dto"></param>
   /// <returns></returns>
-  [Authorize]
+  [Authorize(Roles = "user")]
   [HttpPut]
-  public async Task<Result> UpdateByAuthAsync(UpdateApplyInfoDto dto) {
+  public async Task<Result> UpdateByPhoneAsync(UpdateApplyInfoDto dto) {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
     if (await _repository.ExistsAsync(phone)) {
       var e = dto.ToEntity(phone);
@@ -158,4 +182,45 @@ public class ApplyInfoController : ControllerBase {
     }
     return Result.NotFound($"手机号为{phone}的申请不存在");
   }
+  #endregion
+
+  #region 管理员报表接口
+
+  [HttpGet("report/score/{span}")]
+  public async Task<Result> GetByScoreBucket(int span = 10) {
+    var scoreMin = Enumerable.Range(0, 100 / span).Select(v => v * span).ToList();
+    var t = _db.Reportable(scoreMin).ToQueryable<int>();
+
+    var result =
+      await _db.Queryable<ApplyInfo>()
+               .InnerJoin(t, (x1, x2) => x1.Score > x2.ColumnName && x1.Score <= x2.ColumnName + span)
+               .GroupBy((x1, x2) => x2.ColumnName)
+               .OrderBy((x1, x2) => x2.ColumnName)
+               .Select((x1, x2) => new {
+                 ScoreSpan = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
+                 Count = SqlFunc.AggregateCount(1)
+               })
+               .ToListAsync();
+
+    return Result.Ok(result);
+  }
+
+  [HttpGet("report/class")]
+  public async Task<Result> GetByClassNameBucket() {
+
+    var result =
+          await _db.Queryable<ApplyInfo>()
+                    .GroupBy(info => info.ClassName)
+                    .Select(info => new {
+                      ClassName = info.ClassName,
+                      Count = SqlFunc.AggregateCount(1)
+                    })
+                    .ToListAsync();
+
+    return Result.Ok(result);
+  }
+
+
+  #endregion
+
 }

@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 
 using CksysRecruitNew.Server.Entities;
+using CksysRecruitNew.Server.Models;
 
 using SqlSugar;
 
@@ -20,17 +21,21 @@ public class ApplyInfoRepository : IApplyInfoRepository {
   public Task<ApplyInfo?> GetAsync(string phone)
     => db.Queryable<ApplyInfo>().FirstAsync(info => info.Phone == phone)!;
 
-  public Task<List<ApplyInfo>> GetManyAsync(ApplyInfo? info = null, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null)
+  public Task<List<ApplyInfo>> GetManyAsync(ApplyInfo? info = null, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null, OrderBy orderByScore = OrderBy.None)
     => db.Queryable<ApplyInfo>()
          .WhereIF(!string.IsNullOrWhiteSpace(info?.Id), e => e.Id.Contains(info!.Id))
          .WhereIF(!string.IsNullOrWhiteSpace(info?.Name), e => e.Name.Contains(info!.Name))
          .WhereIF(!string.IsNullOrWhiteSpace(info?.ClassName), e => e.ClassName.Contains(info!.ClassName))
          .WhereIF(!string.IsNullOrWhiteSpace(info?.Phone), e => e.Phone.Contains(info!.Phone))
          .WhereIF(!string.IsNullOrWhiteSpace(info?.Email), e => e.Email.Contains(info!.Email))
-         .ToPageListAsync(pageNumber, pageSize, total);
+         .OrderByIF(orderByScore is not OrderBy.None, e => e.Score, (OrderByType)(orderByScore - 1))
+         .ToPageListAsync(pageNumber, pageSize, total ?? new RefAsync<int>());
 
-  public Task<List<ApplyInfo>> GetManyAsync(Expression<Func<ApplyInfo, bool>> whereExpr, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null)
-  => db.Queryable<ApplyInfo>().Where(whereExpr).ToPageListAsync(pageNumber, pageSize, total);
+  public Task<List<ApplyInfo>> GetManyAsync(Expression<Func<ApplyInfo, bool>> whereExpr, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null, OrderBy orderByScore = OrderBy.None)
+  => db.Queryable<ApplyInfo>()
+       .Where(whereExpr)
+       .OrderByIF(orderByScore is not OrderBy.None, e => e.Score, (OrderByType)(orderByScore - 1))
+       .ToPageListAsync(pageNumber, pageSize, total);
 
   public Task<bool> SaveAsync(ApplyInfo info)
     => db.Insertable(info).ExecuteCommandIdentityIntoEntityAsync();

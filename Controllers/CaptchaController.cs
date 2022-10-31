@@ -4,6 +4,8 @@ using CksysRecruitNew.Server.Models;
 using CksysRecruitNew.Server.Repositories;
 using CksysRecruitNew.Server.Services;
 
+using FreeRedis;
+
 using Microsoft.AspNetCore.Mvc;
 
 using SqlSugar;
@@ -11,22 +13,20 @@ using SqlSugar;
 namespace CksysRecruitNew.Server.Controllers;
 
 [Route("api/captcha")]
-public class CaptchaController {
+public class CaptchaController : ControllerBase {
 
   private readonly SmsService _smsService;
 
-  private readonly ISqlSugarClient _db;
-
   private readonly JwtHelper _jwtHelper;
 
-  private readonly IApplyInfoRepository _applyInfoRepository;
+  private readonly RedisClient _redisClient;
 
-  public CaptchaController(SmsService smsService, ISqlSugarClient db, JwtHelper jwtHelper, IApplyInfoRepository applyInfoRepository) {
+  public CaptchaController(SmsService smsService, JwtHelper jwtHelper, RedisClient redisClient) {
     _smsService = smsService;
-    _db = db;
     _jwtHelper = jwtHelper;
-    _applyInfoRepository = applyInfoRepository;
+    _redisClient = redisClient;
   }
+
 
   /// <summary>
   /// 向phone发送手机验证码
@@ -35,21 +35,19 @@ public class CaptchaController {
   /// <returns></returns>
   [HttpPost("{phone}")]
   public async Task<Result> SeedAsync(string phone) {
-    var lastCode = await _db.Queryable<PhoneCaptcha>()
-                            .Where(e => e.Phone == phone)
-                            .FirstAsync();
 
-    if (lastCode is not null && lastCode.ExpiresTime > DateTime.UtcNow.AddMinutes(4)) return Result.BadRequest("发送的太过频繁！");
+    var ttl = await _redisClient.TtlAsync(phone);
 
-    var code = new Random().Next(100000, 999999).ToString();
-    //await _smsService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
-    if (lastCode is not null) {
-      lastCode.Captcha = code;
-      await _db.Updateable(lastCode).ExecuteCommandAsync();
-    } else {
-      await _db.Insertable(new PhoneCaptcha { Phone = phone, Captcha = code }).ExecuteCommandAsync();
-    }
+    if (ttl >= 4 * 60) return Result.BadRequest("获取太过频繁");
+
+    var code = new Random().Next(10_0000, 99_9999).ToString();
+
+    await _smsService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
+
+    await _redisClient.SetAsync(phone, code, timeoutSeconds: 5 * 60);
+
     return Result.Ok();
+
   }
 
   /// <summary>
@@ -59,23 +57,20 @@ public class CaptchaController {
   /// <param name="captcha"></param>
   /// <returns></returns>
   [HttpGet("{phone}/{captcha}")]
-  public async Task<Result> GetUpdateTokenAsync(string phone, string captcha) {
-    var result = await _db.Queryable<PhoneCaptcha>()
-                          .Where(e => e.Phone == phone)
-                          .FirstAsync();
+  public async Task<TokenResult> GetUpdateTokenAsync(string phone, string captcha) {
 
-    if (result is null) return Result.BadRequest("验证码不存在！");
+    var code = await _redisClient.GetAsync(phone);
 
-    if (result.ExpiresTime < DateTime.UtcNow) {
-      await _db.Deleteable(result).ExecuteCommandAsync();
-      return Result.NotFound("验证码已过期！");
-    }
+    if (code is null) return new TokenResult { Code = 400, Message = "验证码过期或不存在！" };
 
-    if (result.Captcha != captcha) return Result.BadRequest("验证码错误！");
+    if (code != captcha) return new TokenResult { Code = 400, Message = "验证码错误！" };
 
     var token = _jwtHelper.CreateToken(phone, "user");
 
-    return Result.Ok(new { Code = 200, Message = "获取成功", Token = token });
+    await _redisClient.DelAsync(phone);
+
+    return new TokenResult { Code = 200, Message = "获取成功！", Token = token };
+
   }
 
 }

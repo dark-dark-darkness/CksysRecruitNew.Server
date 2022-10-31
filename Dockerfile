@@ -19,4 +19,5 @@ RUN dotnet publish "CksysRecruitNew.Server.csproj" -c Release -o /app/publish /p
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+RUN echo "Asia/Shanghai" > /etc/timezone && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime 
 ENTRYPOINT ["dotnet", "CksysRecruitNew.Server.dll"]

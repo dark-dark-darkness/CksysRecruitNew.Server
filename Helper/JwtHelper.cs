@@ -50,8 +50,8 @@ public class JwtHelper {
         _options.Issuer,                                     //Issuer
         _options.Audience,                                   //Audience
         claims,                                              //Claims,
-        DateTime.UtcNow,                                     //notBefore
-        DateTime.UtcNow.AddMinutes(_options.ExpiresMinutes), //expires
+        DateTime.Now,                                        //notBefore
+        DateTime.Now.AddMinutes(_options.ExpiresMinutes),    //expires
         signingCredentials                                   //Credentials
     );
 

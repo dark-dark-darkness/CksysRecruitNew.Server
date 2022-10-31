@@ -82,6 +82,7 @@ services.AddScoped<SmsService>();
 services.AddScoped<EmailService>();
 services.AddScoped<IApplyInfoRepository, ApplyInfoRepository>();
 services.AddSqlSugarClient(builder.Configuration.GetConnectionString("Default"));
+services.AddFreeRedis(builder.Configuration["Redis"]);
 
 services.Configure<JwtOptions>(options => builder.Configuration.GetSection(JwtOptions.SectionKey).Bind(options));
 services.Configure<AesOptions>(options => builder.Configuration.GetSection(AesOptions.SectionKey).Bind(options));
@@ -123,7 +124,7 @@ if (app.Environment.IsDevelopment()) {
   });
 }
 
-app.InitDatabase(typeof(ApplyInfo), typeof(User), typeof(PhoneCaptcha));
+app.InitDatabase(typeof(ApplyInfo), typeof(User));
 
 app.UseHttpsRedirection();
 
@@ -136,9 +137,9 @@ app.MapPost("/api/login",
 
       if (result is not null && user.Password == aesHelper.Decrypt(result.Password)) {
         var token = jwtHelper.CreateToken(result.Username, "admin");
-        return new { Code = 200, Message = "登录成功", Token = token };
+        return new TokenResult { Code = 200, Message = "登录成功", Token = token };
       } else {
-        return new { Code = 400, Message = "密码或用户名错误", Token = "" };
+        return new TokenResult { Code = 400, Message = "密码或用户名错误", Token = "" };
       }
     });
 
@@ -157,7 +158,7 @@ if (app.Environment.IsDevelopment()) {
   //      }
   //    });
 
-  //app.MapGet("/test/ping", () => Result.Ok(DateTime.UtcNow));
+  //app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
 }
 
 app.MapControllers();

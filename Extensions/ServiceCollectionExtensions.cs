@@ -1,5 +1,7 @@
 ﻿using CksysRecruitNew.Server.Options;
 
+using FreeRedis;
+
 using MailKit.Net.Smtp;
 
 using Microsoft.Extensions.Options;
@@ -56,5 +58,18 @@ public static class ServiceCollectionExtensions {
     return services;
   }
 
+  /// <summary>
+  /// 添加redis客户端
+  /// </summary>
+  /// <param name="services"></param>
+  /// <param name="connectionString"></param>
+  /// <returns></returns>
+  public static IServiceCollection AddFreeRedis(this IServiceCollection services, string connectionString)
+    => services.AddSingleton(sp => {
+      var logger = sp.GetRequiredService<ILogger<RedisClient>>();
+      var redisClient = new RedisClient(connectionString);
+      redisClient.Notice += (sender, arg) => logger.LogInformation("@Log", arg.Log);
+      return redisClient;
+    });
 
 }

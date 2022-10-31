@@ -153,7 +153,7 @@ public class ApplyInfoController : ControllerBase {
     var ms = new MemoryStream();
     await ms.SaveAsAsync(await _repository.GetManyAsync());
     ms.Seek(0, SeekOrigin.Begin);
-    return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.UtcNow}");
+    return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.Now}");
   }
 
   #endregion
@@ -199,7 +199,7 @@ public class ApplyInfoController : ControllerBase {
   /// <param name="span">区间长度</param>
   /// <returns></returns>
   [Authorize(Roles = "admin")]
-  [HttpGet("report/score/{span}")]
+  [HttpGet("report/score/{span?}")]
   public async Task<Result> GetByScoreBucket(int span = 10) {
     var scoreMin = Enumerable.Range(0, 100 / span).Select(v => v * span).ToList();
     var t = _db.Reportable(scoreMin).ToQueryable<int>();

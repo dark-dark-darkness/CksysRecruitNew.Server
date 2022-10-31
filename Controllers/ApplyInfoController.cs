@@ -186,6 +186,7 @@ public class ApplyInfoController : ControllerBase {
 
   #region 管理员报表接口
 
+  [Authorize(Roles = "admin")]
   [HttpGet("report/score/{span}")]
   public async Task<Result> GetByScoreBucket(int span = 10) {
     var scoreMin = Enumerable.Range(0, 100 / span).Select(v => v * span).ToList();
@@ -197,7 +198,7 @@ public class ApplyInfoController : ControllerBase {
                .GroupBy((x1, x2) => x2.ColumnName)
                .OrderBy((x1, x2) => x2.ColumnName)
                .Select((x1, x2) => new {
-                 ScoreSpan = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
+                 ScoreInterval = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
                  Count = SqlFunc.AggregateCount(1)
                })
                .ToListAsync();
@@ -205,6 +206,7 @@ public class ApplyInfoController : ControllerBase {
     return Result.Ok(result);
   }
 
+  [Authorize(Roles = "admin")]
   [HttpGet("report/class")]
   public async Task<Result> GetByClassNameBucket() {
 

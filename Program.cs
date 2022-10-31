@@ -25,7 +25,6 @@ builder.Configuration.AddJsonFile("secret.json");
 builder.Host.UseSerilog(new LoggerConfiguration().WriteTo.Async(c => {
   if (builder.Environment.IsProduction()) c.File("/log/app/err.log", Serilog.Events.LogEventLevel.Error);
   c.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
-
 }).CreateBootstrapLogger());
 
 var services = builder.Services;

@@ -157,7 +157,7 @@ if (app.Environment.IsDevelopment()) {
   //      }
   //    });
 
-  //app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
+  //app.MapGet("/test/ping", () => Result.Ok(DateTime.UtcNow));
 }
 
 app.MapControllers();

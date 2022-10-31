@@ -153,7 +153,7 @@ public class ApplyInfoController : ControllerBase {
     var ms = new MemoryStream();
     await ms.SaveAsAsync(await _repository.GetManyAsync());
     ms.Seek(0, SeekOrigin.Begin);
-    return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.Now}");
+    return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.UtcNow}");
   }
 
   #endregion

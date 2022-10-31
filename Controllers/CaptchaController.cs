@@ -39,7 +39,7 @@ public class CaptchaController {
                             .Where(e => e.Phone == phone)
                             .FirstAsync();
 
-    if (lastCode is not null && lastCode.ExpiresTime > DateTime.Now.AddMinutes(4)) return Result.BadRequest("发送的太过频繁！");
+    if (lastCode is not null && lastCode.ExpiresTime > DateTime.UtcNow.AddMinutes(4)) return Result.BadRequest("发送的太过频繁！");
 
     var code = new Random().Next(100000, 999999).ToString();
     //await _smsService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
@@ -64,9 +64,9 @@ public class CaptchaController {
                           .Where(e => e.Phone == phone)
                           .FirstAsync();
 
-    if (result is null) return Result.NotFound("验证码不存在！");
+    if (result is null) return Result.BadRequest("验证码不存在！");
 
-    if (result.ExpiresTime < DateTime.Now) {
+    if (result.ExpiresTime < DateTime.UtcNow) {
       await _db.Deleteable(result).ExecuteCommandAsync();
       return Result.NotFound("验证码已过期！");
     }

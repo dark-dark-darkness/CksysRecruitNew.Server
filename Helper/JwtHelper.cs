@@ -47,12 +47,12 @@ public class JwtHelper {
 
     // 5. 根据以上，生成token
     var jwtSecurityToken = new JwtSecurityToken(
-        _options.Issuer,                                   //Issuer
-        _options.Audience,                                 //Audience
-        claims,                                           //Claims,
-        DateTime.Now,                                     //notBefore
-        DateTime.Now.AddMinutes(_options.ExpiresMinutes), //expires
-        signingCredentials                                 //Credentials
+        _options.Issuer,                                     //Issuer
+        _options.Audience,                                   //Audience
+        claims,                                              //Claims,
+        DateTime.UtcNow,                                     //notBefore
+        DateTime.UtcNow.AddMinutes(_options.ExpiresMinutes), //expires
+        signingCredentials                                   //Credentials
     );
 
     // 6. 将token变为string

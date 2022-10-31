@@ -13,7 +13,7 @@ namespace CksysRecruitNew.Server.Controllers;
 [Route("api/captcha")]
 public class CaptchaController {
 
-  private readonly SmsService _smsNotifyService;
+  private readonly SmsService _smsService;
 
   private readonly ISqlSugarClient _db;
 
@@ -21,8 +21,8 @@ public class CaptchaController {
 
   private readonly IApplyInfoRepository _applyInfoRepository;
 
-  public CaptchaController(SmsService smsNotifyService, ISqlSugarClient db, JwtHelper jwtHelper, IApplyInfoRepository applyInfoRepository) {
-    _smsNotifyService = smsNotifyService;
+  public CaptchaController(SmsService smsService, ISqlSugarClient db, JwtHelper jwtHelper, IApplyInfoRepository applyInfoRepository) {
+    _smsService = smsService;
     _db = db;
     _jwtHelper = jwtHelper;
     _applyInfoRepository = applyInfoRepository;
@@ -38,7 +38,7 @@ public class CaptchaController {
     if (lastCode is not null && lastCode.ExpiresTime > DateTime.Now) return Result.BadRequest("发送的太过频繁！");
 
     var code = new Random().Next(100000, 999999).ToString();
-    await _smsNotifyService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
+    await _smsService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
     await _db.Insertable(new PhoneCaptcha { Phone = phone, Captcha = code }).ExecuteCommandAsync();
     return Result.Ok();
   }
@@ -52,15 +52,16 @@ public class CaptchaController {
 
     if (result is null) return Result.NotFound("验证码不存在！");
 
-    if (result.ExpiresTime < DateTime.Now) return Result.NotFound("验证码已过期！");
+    if (result.ExpiresTime < DateTime.Now) {
+      await _db.Deleteable(result).ExecuteCommandAsync();
+      return Result.NotFound("验证码已过期！");
+    }
 
     if (result.Captcha != captcha) return Result.BadRequest("验证码错误！");
 
-    var info = await _applyInfoRepository.GetAsync(info => info.Phone == phone);
+    var token = _jwtHelper.CreateToken(phone, "user");
 
-    if (info is null) return Result.BadRequest("该手机号没有申请信息！");
-
-    var token = _jwtHelper.CreateToken(info!.Id, "updater");
+    await _db.Deleteable(result).ExecuteCommandAsync();
 
     return Result.Ok(token);
   }

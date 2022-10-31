@@ -16,3 +16,4 @@ Properties/PublishProfiles
 *.csproj.user
 Dockerfile
 /Secrents/
+docker-compose.yml

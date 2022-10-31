@@ -25,9 +25,13 @@ public static class ServiceCollectionExtensions {
       IsAutoCloseConnection = true,
       ConnectionString = connectionString
     }, db => {
+      db.Aop.OnLogExecuting = (sql, parms) => {
+        var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
+        logger.LogInformation("Executing SQL:\n{sql}", sql);
+      };
       db.Aop.OnLogExecuted = (sql, parms) => {
         var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
-        logger.LogInformation("Executed SQL\n{sql} in {time}ms", sql, db.Ado.SqlExecutionTime.TotalMilliseconds);
+        logger.LogInformation("Executed SQL in {time}ms", db.Ado.SqlExecutionTime.TotalMilliseconds);
       };
 
     }));

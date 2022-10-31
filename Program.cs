@@ -33,7 +33,7 @@ var services = builder.Services;
 services.AddSmtpClient();
 services.AddSwaggerGen(options => {
 
-  options.AddSecurityDefinition("Blog.Core", new() {
+  options.AddSecurityDefinition("CksysRecruitNew.Server", new() {
     Description = "JWT授权(数据将在请求头中进行传输) 直接在下框中输入Bearer {token}（注意两者之间是一个空格）\"",
     Name = "Authorization", // jwt默认的参数名称
   });
@@ -104,12 +104,13 @@ services.AddHsts(options => {
 
 var app = builder.Build();
 
+app.UseCors();
+
 if (app.Environment.IsDevelopment()) {
   app.UseSwagger();
   app.UseSwaggerUI();
 } else {
   app.UseHsts();
-
   app.UseExceptionHandler(appBuilder => {
     appBuilder.Run(async context => {
       context.Response.StatusCode = 200;
@@ -123,12 +124,9 @@ if (app.Environment.IsDevelopment()) {
   });
 }
 
-
 app.InitDatabase(typeof(ApplyInfo), typeof(User), typeof(PhoneCaptcha));
 
 app.UseHttpsRedirection();
-
-app.UseCors();
 
 app.UseAuthentication()
    .UseAuthorization();
@@ -150,24 +148,18 @@ if (app.Environment.IsDevelopment()) {
   app.MapPost("/test/{password}",
       ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
 
-  app.MapGet("/test/{code}",
-      async ([FromServices] SmsService notifyService, string code) => {
+  app.MapGet("/test/{phone}/{code}",
+      async ([FromServices] SmsService notifyService, string phone, string code) => {
         try {
-          await notifyService.SeedAsync(new SmsSeedParameter {
-            Phone = "18075099144",
-            ParameterString = $$"""{"code":"{{code}}   "}""",
-            SignName = "阿里云短信测试",
-            TemplateCode = "SMS_154950909"
-          });
+          await notifyService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
         } catch (Exception ex) {
           Log.Error(ex, "消息发送失败");
           throw;
         }
-
       });
 
+  app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
 }
-
 
 app.MapControllers();
 

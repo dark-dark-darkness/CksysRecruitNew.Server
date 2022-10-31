@@ -29,10 +29,10 @@ public class JwtHelper {
   /// <param name="username"></param>
   /// <param name="role"></param>
   /// <returns></returns>
-  public string CreateToken(string username, string role) {
+  public string CreateToken(string nameIdentifier, string role) {
     // 1. 定义需要使用到的Claims
     var claims = new[] {
-        new Claim(ClaimTypes.NameIdentifier, username),
+        new Claim(ClaimTypes.NameIdentifier, nameIdentifier),
         new Claim(ClaimTypes.Role, role)
       };
 
@@ -47,12 +47,12 @@ public class JwtHelper {
 
     // 5. 根据以上，生成token
     var jwtSecurityToken = new JwtSecurityToken(
-        _options.Issuer,             //Issuer
-        _options.Audience,           //Audience
-        claims,                      //Claims,
-        DateTime.Now,                //notBefore
-        DateTime.Now.AddMinutes(30), //expires
-        signingCredentials           //Credentials
+        _options.Issuer,                                   //Issuer
+        _options.Audience,                                 //Audience
+        claims,                                           //Claims,
+        DateTime.Now,                                     //notBefore
+        DateTime.Now.AddMinutes(_options.ExpiresMinutes), //expires
+        signingCredentials                                 //Credentials
     );
 
     // 6. 将token变为string

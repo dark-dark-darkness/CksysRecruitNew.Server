@@ -19,7 +19,4 @@ RUN dotnet publish "CksysRecruitNew.Server.csproj" -c Release -o /app/publish /p
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY Secrents/8708894_ntr-wkpd.ren.pfx /ca/8708894_ntr-wkpd.ren.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/ca/8708894_ntr-wkpd.ren.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=6uvaksct
 ENTRYPOINT ["dotnet", "CksysRecruitNew.Server.dll"]

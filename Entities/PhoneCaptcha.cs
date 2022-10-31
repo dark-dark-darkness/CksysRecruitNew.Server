@@ -2,7 +2,7 @@
 
 namespace CksysRecruitNew.Server.Entities;
 
-[SugarTable("t_PhoneCaptcha")]
+[SugarTable(TableNameConsts.PhoneCaptcha)]
 public class PhoneCaptcha {
   public string Phone { get; set; } = string.Empty;
 

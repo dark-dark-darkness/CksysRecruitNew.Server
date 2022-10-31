@@ -31,12 +31,6 @@ public class SearchApplyInfoDto {
   [DisplayName("分数上限")]
   public double MaxScore { get; set; } = 0;
 
-  [DisplayName("一页数量")]
-  public int PageSize { get; set; } = 20;
-
-  [DisplayName("第几页")]
-  public int PageNumber { get; set; } = 1;
-
 
   public Expression<Func<ApplyInfo, bool>> ToExpression()
     => Expressionable.Create<ApplyInfo>()

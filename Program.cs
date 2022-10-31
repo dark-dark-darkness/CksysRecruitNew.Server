@@ -144,20 +144,20 @@ app.MapPost("/api/login",
 
 if (app.Environment.IsDevelopment()) {
 
-  app.MapPost("/test/{password}",
-      ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
+  //app.MapPost("/test/{password}",
+  //    ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
 
-  app.MapGet("/test/{phone}/{code}",
-      async ([FromServices] SmsService notifyService, string phone, string code) => {
-        try {
-          await notifyService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
-        } catch (Exception ex) {
-          Log.Error(ex, "消息发送失败");
-          throw;
-        }
-      });
+  //app.MapGet("/test/{phone}/{code}",
+  //    async ([FromServices] SmsService notifyService, string phone, string code) => {
+  //      try {
+  //        await notifyService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
+  //      } catch (Exception ex) {
+  //        Log.Error(ex, "消息发送失败");
+  //        throw;
+  //      }
+  //    });
 
-  app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
+  //app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
 }
 
 app.MapControllers();

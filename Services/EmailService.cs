@@ -28,7 +28,7 @@ public class EmailService {
 
     message.From.Add(new MailboxAddress(_options.Name, _options.Address));
 
-    message.To.Add(new MailboxAddress("申请人", name));
+    message.To.Add(new MailboxAddress(_options.Name, email));
 
     message.Subject = "创客实验室招新";
 
@@ -41,7 +41,7 @@ public class EmailService {
       	</div>
       	<div style="background-color: white; border-color: rgb(248, 135, 7); border: 2px;">
       		<div style="height: 100px;margin-left: 1rem;">
-      			<div style="margin-top: 1rem;"><b>发送给</b> <b style="color: rgb(127, 140, 255);">{name}</b></div>
+      			<div style="margin-top: 1rem;"><b>发送给</b> <b style="color: rgb(127, 140, 255);">{ name}             </b></div>
       			<div style="font-size: 14px;">
       				<div><small>软件开发创客实验室报名通知：</small></div>
       				<div style="margin-left: 1rem;padding-top: 2rem;"><small>您的申请已成功提交，请等待后续通知。</small></div>
@@ -52,12 +52,20 @@ public class EmailService {
       		</div>
       	</div>
       </div>
-      """;
+      """ ;
 
     message.Body = bodyBuilder.ToMessageBody();
-    await _smtpClient.SendAsync(message);
+    try {
+      var seedTask = _smtpClient.SendAsync(message);
+      if (await Task.WhenAny(seedTask, Task.Delay(1000)) == seedTask) {
+        _logger.LogInformation("[Email] Send to {Name}({Email}) success", name, email);
+      } else {
+        _logger.LogWarning("[Email] Send to {Name}({Email}) timeout", name, email);
+      }
+    } catch (Exception e) {
+      _logger.LogError(e, "[Email] Send to {Name}({Email}) failure", name, email);
+    }
 
-    _logger.LogInformation("Send to {Name}({Address}) success", name, email);
 
     return true;
   }

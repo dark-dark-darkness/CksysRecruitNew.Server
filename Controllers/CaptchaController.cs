@@ -44,7 +44,7 @@ public class CaptchaController : ControllerBase {
 
     await _smsService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
 
-    await _redisClient.SetAsync(phone, code, timeoutSeconds: 5 * 60);
+    await _redisClient.SetAsync(phone, code, 5 * 60);
 
     return Result.Ok();
 

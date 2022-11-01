@@ -24,21 +24,21 @@ public static class ServiceCollectionExtensions {
   /// <returns></returns>
   public static IServiceCollection AddSqlSugarClient(this IServiceCollection services, string connectionString)
     => services.AddSingleton<ISqlSugarClient>((sp) =>
-    new SqlSugarScope(new ConnectionConfig {
-      DbType = DbType.MySql,
-      IsAutoCloseConnection = true,
-      ConnectionString = connectionString
-    }, db => {
-      db.Aop.OnLogExecuting = (sql, parms) => {
-        var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
-        logger.LogInformation("Executing SQL:\n{sql}", sql);
-      };
-      db.Aop.OnLogExecuted = (sql, parms) => {
-        var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
-        logger.LogInformation("Executed SQL in {time}ms", db.Ado.SqlExecutionTime.TotalMilliseconds);
-      };
+        new SqlSugarScope(new ConnectionConfig {
+          DbType = DbType.MySql,
+          IsAutoCloseConnection = true,
+          ConnectionString = connectionString,
+        }, db => {
+          db.Aop.OnLogExecuting = (sql, parms) => {
+            var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
+            logger.LogInformation("Executing SQL:\n{sql}", sql);
+          };
+          db.Aop.OnLogExecuted = (sql, parms) => {
+            var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
+            logger.LogInformation("Executed SQL in {time}ms", db.Ado.SqlExecutionTime.TotalMilliseconds);
+          };
 
-    }));
+        }));
 
   /// <summary>
   /// 添加smtp客户端
@@ -46,11 +46,11 @@ public static class ServiceCollectionExtensions {
   /// <param name="services"></param>
   /// <returns></returns>
   public static IServiceCollection AddSmtpClient(this IServiceCollection services) {
-    services.AddSingleton<ISmtpClient>(sp => {
+    services.AddScoped<ISmtpClient>(sp => {
       var options = sp.GetRequiredService<IOptions<SmtpOptions>>().Value;
       var logger = sp.GetRequiredService<ILogger<ISmtpClient>>();
       var client = new SmtpClient {
-        ServerCertificateValidationCallback = (s, c, h, e) => true
+        ServerCertificateValidationCallback = (s, c, h, e) => true,
       };
       client.Connect(options.Host, options.Port, options.UseSsl);
       client.Authenticate(options.Username, options.Password);

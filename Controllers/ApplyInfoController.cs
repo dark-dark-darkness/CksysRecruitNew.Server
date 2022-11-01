@@ -22,7 +22,7 @@ namespace CksysRecruitNew.Server.Controllers;
 [Route("api/apply-info")]
 public class ApplyInfoController : ControllerBase {
 
-  #region 私有字段+构造函数
+#region 私有字段+构造函数
 
   private readonly IApplyInfoRepository _repository;
   private readonly EmailService _notify;
@@ -42,9 +42,9 @@ public class ApplyInfoController : ControllerBase {
     _db = db;
   }
 
-  #endregion
+#endregion
 
-  #region 公开接口
+#region 公开接口
 
   /// <summary>
   /// 判断手机号为phone的申请信息是否存在
@@ -55,17 +55,17 @@ public class ApplyInfoController : ControllerBase {
   [HttpGet("exist")]
   public async Task<Result> ExistAsync(string? id, string? phone) {
     var expr = Expressionable.Create<ApplyInfo>()
-      .OrIF(!string.IsNullOrWhiteSpace(id), info => info.Id == id)
-      .OrIF(!string.IsNullOrWhiteSpace(phone), info => info.Phone == phone)
-      .ToExpression();
+                             .OrIF(!string.IsNullOrWhiteSpace(id), info => info.Id == id)
+                             .OrIF(!string.IsNullOrWhiteSpace(phone), info => info.Phone == phone)
+                             .ToExpression();
 
     var result = await _repository.ExistsAsync(expr);
     return Result.Ok(result);
   }
 
-  #endregion
+#endregion
 
-  #region 管理员接口
+#region 管理员接口
 
   /// <summary>
   /// 获取申请信息详细信息
@@ -93,7 +93,7 @@ public class ApplyInfoController : ControllerBase {
     var totalAsync = new RefAsync<int>();
     var page = await _repository.GetManyAsync(whereDto.ToExpression(), pageNumber, pageSize, totalAsync, scoreOrderBy);
     if (totalAsync.Value is 0) return Result<ApplyInfoPageDto>.NotFound("没有找到符合条件的数据");
-    return Result<ApplyInfoPageDto>.Ok(new() { Page = page, PageNumber = pageNumber, PageSize = pageSize, Total = totalAsync.Value });
+    return Result<ApplyInfoPageDto>.Ok(new ApplyInfoPageDto { Page = page, PageNumber = pageNumber, PageSize = pageSize, Total = totalAsync.Value });
   }
 
   /// <summary>
@@ -139,9 +139,10 @@ public class ApplyInfoController : ControllerBase {
     return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.Now}");
   }
 
-  #endregion
+#endregion
 
-  #region 申请人接口
+#region 申请人接口
+
   /// <summary>
   /// 提交申请信息
   /// </summary>
@@ -157,14 +158,9 @@ public class ApplyInfoController : ControllerBase {
     var entity = dto.ToEntity(phone);
     var result = await _repository.SaveAsync(entity);
 
-    try {
-      await _notify.SeedAsync(dto.Email, dto.Name);
-    } catch (Exception ex) {
-      _logger.LogError(ex, "发送邮件到 {string}（{string}）错误", dto.Name, dto.Email);
-      throw;
-    }
+    await _notify.SeedAsync(dto.Email, dto.Name);
 
-    return result ? Result.Ok(result) : Result.BadRequest();
+    return Result.Ok(result);
   }
 
   /// <summary>
@@ -196,9 +192,9 @@ public class ApplyInfoController : ControllerBase {
     return Result.NotFound($"手机号为{phone}的申请不存在");
   }
 
-  #endregion
+#endregion
 
-  #region 管理员报表接口
+#region 管理员报表接口
 
   /// <summary>
   /// 根据分数分桶统计
@@ -217,9 +213,9 @@ public class ApplyInfoController : ControllerBase {
                  .GroupBy((x1, x2) => x2.ColumnName)
                  .OrderBy((x1, x2) => x2.ColumnName)
                  .Select((x1, x2) => new {
-                   ScoreInterval = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
-                   Count = SqlFunc.AggregateCount(1),
-                 })
+                    ScoreInterval = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
+                    Count = SqlFunc.AggregateCount(1),
+                  })
                  .ToListAsync();
 
     return Result.Ok(result);
@@ -237,14 +233,14 @@ public class ApplyInfoController : ControllerBase {
         await _db.Queryable<ApplyInfo>()
                  .GroupBy(info => info.ClassName)
                  .Select(info => new {
-                   ClassName = info.ClassName,
-                   Count = SqlFunc.AggregateCount(1),
-                 })
+                    ClassName = info.ClassName,
+                    Count = SqlFunc.AggregateCount(1),
+                  })
                  .ToListAsync();
 
     return Result.Ok(result);
   }
 
-  #endregion
+#endregion
 
 }

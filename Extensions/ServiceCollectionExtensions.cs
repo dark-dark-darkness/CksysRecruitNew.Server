@@ -2,6 +2,8 @@
 
 using FreeRedis;
 
+using Google.Protobuf.WellKnownTypes;
+
 using MailKit.Net.Smtp;
 
 using Microsoft.Extensions.Options;
@@ -44,17 +46,18 @@ public static class ServiceCollectionExtensions {
   /// <param name="services"></param>
   /// <returns></returns>
   public static IServiceCollection AddSmtpClient(this IServiceCollection services) {
-    services.AddScoped(sp => {
+    services.AddSingleton<ISmtpClient>(sp => {
+      var options = sp.GetRequiredService<IOptions<SmtpOptions>>().Value;
+      var logger = sp.GetRequiredService<ILogger<ISmtpClient>>();
       var client = new SmtpClient {
         ServerCertificateValidationCallback = (s, c, h, e) => true
       };
-      client.AuthenticationMechanisms.Remove("XOAUTH2");
-      var options = sp.GetRequiredService<IOptions<SmtpOptions>>().Value;
       client.Connect(options.Host, options.Port, options.UseSsl);
       client.Authenticate(options.Username, options.Password);
+      client.AuthenticationMechanisms.Remove("XOAUTH2");
+      logger.LogInformation("Smtp Connection Success");
       return client;
     });
-
     return services;
   }
 

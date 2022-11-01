@@ -49,35 +49,18 @@ public class ApplyInfoController : ControllerBase {
   /// <summary>
   /// 判断手机号为phone的申请信息是否存在
   /// </summary>
+  /// <param name="id"></param>
   /// <param name="phone"></param>
   /// <returns></returns>
-  [HttpGet("exist/{phone}")]
-  public async Task<Result> ExistAsync(string phone) {
-    var result = await _repository.GetAsync(phone);
-    return result is not null ? Result.Ok(true) : Result.NotFound($"手机号为{phone}的申请没有找到", false);
-  }
+  [HttpGet("exist")]
+  public async Task<Result> ExistAsync(string? id, string? phone) {
+    var expr = Expressionable.Create<ApplyInfo>()
+      .OrIF(!string.IsNullOrWhiteSpace(id), info => info.Id == id)
+      .OrIF(!string.IsNullOrWhiteSpace(phone), info => info.Phone == phone)
+      .ToExpression();
 
-  /// <summary>
-  /// 保存申请信息
-  /// </summary>
-  /// <param name="dto"></param>
-  /// <returns></returns>
-  [HttpPost]
-  public async Task<Result> SaveAsync(CreateApplyInfoDto dto) {
-    var exists = await _repository.ExistsAsync(info => info.Phone == dto.Phone);
-    if (exists) return Result.BadRequest($"手机号为{dto.Phone}的申请已经存在");
-
-    var entity = dto.ToEntity();
-    var result = await _repository.SaveAsync(entity);
-
-    try {
-      await _notify.SeedAsync(dto.Email, dto.Name);
-    } catch (Exception ex) {
-      _logger.LogError(ex, "发送邮件到 {string}（{string}）错误", dto.Name, dto.Email);
-      throw;
-    }
-
-    return result ? Result.Ok(result) : Result.BadRequest();
+    var result = await _repository.ExistsAsync(expr);
+    return Result.Ok(result);
   }
 
   #endregion
@@ -139,8 +122,8 @@ public class ApplyInfoController : ControllerBase {
   public async Task<Result> DeleteAsync(string phone) {
     var exists = await _repository.ExistsAsync(info => info.Phone == phone);
     if (!exists) return Result.NotFound($"手机号为{phone}的申请没有找到");
-    await _repository.DeleteAsync(phone);
-    return Result.Ok();
+    var result = await _repository.DeleteAsync(phone);
+    return result ? Result.Ok(result) : Result.BadRequest();
   }
 
   /// <summary>
@@ -159,14 +142,38 @@ public class ApplyInfoController : ControllerBase {
   #endregion
 
   #region 申请人接口
+  /// <summary>
+  /// 提交申请信息
+  /// </summary>
+  /// <param name="dto"></param>
+  /// <returns></returns>
+  [HttpPost]
+  [Authorize(Roles = "applicant")]
+  public async Task<Result> SaveAsync(CreateApplyInfoDto dto) {
+    var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
+    var exists = await _repository.ExistsAsync(info => info.Phone == phone);
+    if (exists) return Result.BadRequest($"手机号为{phone}的申请已经存在");
+
+    var entity = dto.ToEntity(phone);
+    var result = await _repository.SaveAsync(entity);
+
+    try {
+      await _notify.SeedAsync(dto.Email, dto.Name);
+    } catch (Exception ex) {
+      _logger.LogError(ex, "发送邮件到 {string}（{string}）错误", dto.Name, dto.Email);
+      throw;
+    }
+
+    return result ? Result.Ok(result) : Result.BadRequest();
+  }
 
   /// <summary>
   /// 申请人获取自己的信息
   /// </summary>
   /// <returns></returns>
-  [Authorize(Roles = "user")]
+  [Authorize(Roles = "applicant")]
   [HttpGet]
-  public async Task<Result<ApplyInfo>> GetByPhoneAsync() {
+  public async Task<Result<ApplyInfo>> GetByAuthAsync() {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
     var result = await _repository.GetAsync(info => info.Phone == phone);
     return result is not null ? Result<ApplyInfo>.Ok(result) : Result<ApplyInfo>.NotFound($"手机号为{phone}的申请没有找到");
@@ -177,9 +184,9 @@ public class ApplyInfoController : ControllerBase {
   /// </summary>
   /// <param name="dto"></param>
   /// <returns></returns>
-  [Authorize(Roles = "user")]
+  [Authorize(Roles = "applicant")]
   [HttpPut]
-  public async Task<Result> UpdateByPhoneAsync(UpdateApplyInfoDto dto) {
+  public async Task<Result> UpdateByAuthAsync(UpdateApplyInfoDto dto) {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
     if (await _repository.ExistsAsync(phone)) {
       var e = dto.ToEntity(phone);

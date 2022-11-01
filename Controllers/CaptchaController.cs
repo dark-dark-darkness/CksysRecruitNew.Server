@@ -57,7 +57,7 @@ public class CaptchaController : ControllerBase {
   /// <param name="captcha"></param>
   /// <returns></returns>
   [HttpGet("{phone}/{captcha}")]
-  public async Task<TokenResult> GetUpdateTokenAsync(string phone, string captcha) {
+  public async Task<TokenResult> GetApplicantTokenAsync(string phone, string captcha) {
 
     var code = await _redisClient.GetAsync(phone);
 
@@ -65,7 +65,7 @@ public class CaptchaController : ControllerBase {
 
     if (code != captcha) return new TokenResult { Code = 400, Message = "验证码错误！" };
 
-    var token = _jwtHelper.CreateToken(phone, "user");
+    var token = _jwtHelper.CreateToken(phone, "applicant");
 
     await _redisClient.DelAsync(phone);
 

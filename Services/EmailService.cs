@@ -1,4 +1,5 @@
-﻿using CksysRecruitNew.Server.Options;
+﻿using CksysRecruitNew.Server.Helper;
+using CksysRecruitNew.Server.Options;
 
 using MailKit.Net.Smtp;
 
@@ -10,30 +11,30 @@ namespace CksysRecruitNew.Server.Services;
 
 public class EmailService {
 
-    private readonly SmtpClient _client;
+  private readonly ISmtpClient _smtpClient;
 
-    private readonly SmtpOptions _options;
+  private readonly SmtpOptions _options;
 
-    private readonly ILogger<EmailService> _logger;
+  private readonly ILogger<EmailService> _logger;
 
-    public EmailService(SmtpClient client, IOptions<SmtpOptions> options, ILogger<EmailService> logger) {
-        _client = client;
-        _options = options.Value;
-        _logger = logger;
-    }
+  public EmailService(IOptions<SmtpOptions> options, ILogger<EmailService> logger, ISmtpClient smtpClient) {
+    _options = options.Value;
+    _logger = logger;
+    _smtpClient = smtpClient;
+  }
 
-    public async Task SeedAsync(string email, string name) {
-        var message = new MimeMessage();
+  public async Task<bool> SeedAsync(string email, string name) {
+    var message = new MimeMessage();
 
-        message.From.Add(new MailboxAddress(_options.Name, _options.Address));
+    message.From.Add(new MailboxAddress(_options.Name, _options.Address));
 
-        message.To.Add(new MailboxAddress("申请人", name));
+    message.To.Add(new MailboxAddress("申请人", name));
 
-        message.Subject = "创客实验室招新";
+    message.Subject = "创客实验室招新";
 
-        var bodyBuilder = new BodyBuilder();
+    var bodyBuilder = new BodyBuilder();
 
-        bodyBuilder.HtmlBody = $"""
+    bodyBuilder.HtmlBody = $"""
       <div style="height: 260px;border-color: rgb(248, 135, 7);border-style: solid;border-width: 0 1px 5px 1px;">
       	<div style="height: auto;text-align: end;background-color: rgb(248, 135, 7);color: aliceblue; margin-bottom: 0;">
       		<div style="line-height: 50px;height: 50px;padding-right: 2rem;">软件开发创客实验室</div>
@@ -53,11 +54,12 @@ public class EmailService {
       </div>
       """;
 
-        message.Body = bodyBuilder.ToMessageBody();
-        await _client.SendAsync(message);
+    message.Body = bodyBuilder.ToMessageBody();
+    await _smtpClient.SendAsync(message);
 
-        _logger.LogInformation("Send to {Name}({Address}) success", name, email);
+    _logger.LogInformation("Send to {Name}({Address}) success", name, email);
 
-    }
+    return true;
+  }
 
 }

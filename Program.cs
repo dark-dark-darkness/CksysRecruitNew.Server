@@ -60,8 +60,6 @@ services.AddControllers()
           };
         });
 
-services.AddAuthorization();
-
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
           options.TokenValidationParameters = new TokenValidationParameters() {
@@ -76,6 +74,8 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             RequireExpirationTime = true,
           };
         });
+
+services.AddAuthorization();
 
 services.AddEndpointsApiExplorer();
 services.AddScoped<SmsService>();

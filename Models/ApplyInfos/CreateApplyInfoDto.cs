@@ -21,11 +21,6 @@ public class CreateApplyInfoDto {
   [MinLength(1, ErrorMessage = "请输入正确的{0}！")]
   public string ClassName { get; set; } = string.Empty;
 
-  [Display(Name = "手机号")]
-  [Required(ErrorMessage = "请填写{0}")]
-  [Phone(ErrorMessage = "请输入正确的{0}！")]
-  public string Phone { get; set; } = string.Empty;
-
   [Display(Name = "电子邮箱")]
   [Required(ErrorMessage = "请填写{0}")]
   [EmailAddress(ErrorMessage = "请输入正确的邮箱地址！")]
@@ -37,12 +32,12 @@ public class CreateApplyInfoDto {
   public string Profile { get; set; } = string.Empty;
 
 
-  public ApplyInfo ToEntity()
+  public ApplyInfo ToEntity(string phone = "")
     => new() {
       Id = Id,
       Name = Name,
       ClassName = ClassName,
-      Phone = Phone,
+      Phone = phone,
       Email = Email,
       Profile = Profile,
     };

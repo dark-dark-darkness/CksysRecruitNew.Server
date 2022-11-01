@@ -29,7 +29,7 @@ public class JwtHelper {
   /// <param name="username"></param>
   /// <param name="role"></param>
   /// <returns></returns>
-  public string CreateToken(string nameIdentifier, string role) {
+  public string CreateToken(string nameIdentifier, string role, int? expiresMinutes = default) {
     // 1. 定义需要使用到的Claims
     var claims = new[] {
         new Claim(ClaimTypes.NameIdentifier, nameIdentifier),
@@ -51,7 +51,7 @@ public class JwtHelper {
         _options.Audience,                                   //Audience
         claims,                                              //Claims,
         DateTime.Now,                                        //notBefore
-        DateTime.Now.AddMinutes(_options.ExpiresMinutes),    //expires
+        DateTime.Now.AddMinutes(expiresMinutes ?? _options.ExpiresMinutes),    //expires
         signingCredentials                                   //Credentials
     );
 

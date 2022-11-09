@@ -1,6 +1,6 @@
 ﻿namespace CksysRecruitNew.Server.Options;
 
-public class AesOptions {
+public sealed class AesOptions {
 
   public const string SectionKey = "AesOptions";
   /// <summary>

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace CksysRecruitNew.Server.Helper;
 
-public class SmtpHelper {
+public sealed class SmtpHelper {
 
   private readonly SmtpOptions _options;
   private readonly ILogger<SmtpHelper> _logger;

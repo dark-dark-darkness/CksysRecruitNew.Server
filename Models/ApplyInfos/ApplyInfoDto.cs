@@ -4,7 +4,7 @@ using CksysRecruitNew.Server.Entities;
 
 namespace CksysRecruitNew.Server.Models.ApplyInfos;
 
-public class ApplyInfoDto {
+public sealed class ApplyInfoDto {
 
   [Display(Name = "学号")]
   public string Id { get; set; } = string.Empty;

@@ -20,7 +20,7 @@ namespace CksysRecruitNew.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/apply-info")]
-public class ApplyInfoController : ControllerBase {
+public sealed class ApplyInfoController : ControllerBase {
 
   #region 私有字段+构造函数
 
@@ -156,13 +156,13 @@ public class ApplyInfoController : ControllerBase {
 
     var entity = dto.ToEntity(phone);
     var result = await _repository.SaveAsync(entity);
-
-    try {
-      await _notify.SeedAsync(dto.Email, dto.Name);
-    } catch (Exception ex) {
-      _logger.LogError(ex, "发送邮件到 {string}（{string}）错误", dto.Name, dto.Email);
-      throw;
-    }
+    // qq邮箱好像有毛病发不出去，蹲个付费的
+    //try {
+    //  await _notify.SeedAsync(dto.Email, dto.Name);
+    //} catch (Exception ex) {
+    //  _logger.LogError(ex, "发送邮件到 {string}（{string}）错误", dto.Name, dto.Email);
+    //  throw;
+    //}
 
     return result ? Result.Ok(result) : Result.BadRequest();
   }
@@ -171,8 +171,8 @@ public class ApplyInfoController : ControllerBase {
   /// 申请人获取自己的信息
   /// </summary>
   /// <returns></returns>
-  [Authorize(Roles = "applicant")]
   [HttpGet]
+  [Authorize(Roles = "applicant")]
   public async Task<Result<ApplyInfo>> GetByAuthAsync() {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
     var result = await _repository.GetAsync(info => info.Phone == phone);
@@ -184,8 +184,8 @@ public class ApplyInfoController : ControllerBase {
   /// </summary>
   /// <param name="dto"></param>
   /// <returns></returns>
-  [Authorize(Roles = "applicant")]
   [HttpPut]
+  [Authorize(Roles = "applicant")]
   public async Task<Result> UpdateByAuthAsync(UpdateApplyInfoDto dto) {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
     if (await _repository.ExistsAsync(phone)) {

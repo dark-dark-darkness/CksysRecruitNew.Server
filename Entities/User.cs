@@ -3,7 +3,7 @@
 namespace CksysRecruitNew.Server.Entities;
 
 [SugarTable(EntitiesConsts.TableName.User)]
-public class User {
+public sealed class User {
   [SugarColumn(IsPrimaryKey = true)]
   public string Username { get; set; } = string.Empty;
 

@@ -10,7 +10,7 @@ namespace CksysRecruitNew.Server.Helper;
 /// <summary>
 /// aes加密帮助类
 /// </summary>
-public class AesHelper {
+public sealed class AesHelper {
 
   private readonly AesOptions _options;
 

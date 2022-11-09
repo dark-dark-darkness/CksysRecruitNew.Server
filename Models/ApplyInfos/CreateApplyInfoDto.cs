@@ -4,7 +4,7 @@ using CksysRecruitNew.Server.Entities;
 
 namespace CksysRecruitNew.Server.Models.ApplyInfos;
 
-public class CreateApplyInfoDto {
+public sealed class CreateApplyInfoDto {
 
   [Display(Name = "学号")]
   [Required(ErrorMessage = "请填写{0}")]

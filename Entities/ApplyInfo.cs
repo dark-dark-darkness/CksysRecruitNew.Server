@@ -5,7 +5,7 @@ using SqlSugar;
 namespace CksysRecruitNew.Server.Entities;
 
 [SugarTable(EntitiesConsts.TableName.ApplyInfo)]
-public class ApplyInfo {
+public sealed class ApplyInfo {
 
   [SugarColumn(IsPrimaryKey = true)]
   [DisplayName("手机号")]

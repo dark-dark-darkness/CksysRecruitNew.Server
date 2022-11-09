@@ -1,6 +1,6 @@
 ﻿namespace CksysRecruitNew.Server.Models;
 
-public class SmsSeedParameter {
+public sealed class SmsSeedParameter {
 
   public string SignName { get; set; } = null!;
 

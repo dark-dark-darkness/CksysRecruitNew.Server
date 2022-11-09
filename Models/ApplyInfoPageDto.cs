@@ -2,7 +2,7 @@
 
 namespace CksysRecruitNew.Server.Models;
 
-public class ApplyInfoPageDto {
+public sealed class ApplyInfoPageDto {
   public int Total { get; set; }
 
   public int PageNumber { get; set; } = 1;

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace CksysRecruitNew.Server.Services;
 
-public class SmsService {
+public sealed class SmsService {
   private readonly ILogger<SmsService> _logger;
 
   private readonly SmsOptions _options;

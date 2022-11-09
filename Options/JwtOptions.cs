@@ -1,6 +1,6 @@
 ﻿namespace CksysRecruitNew.Server.Options;
 
-public class JwtOptions {
+public sealed class JwtOptions {
 
   public const string SectionKey = "JwtOptions";
   /// <summary>

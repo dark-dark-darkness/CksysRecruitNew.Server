@@ -1,6 +1,6 @@
 ﻿namespace CksysRecruitNew.Server.Options;
 
-public class SmsOptions {
+public sealed class SmsOptions {
   public const string SectionKey = "SmsOptions";
 
   /// <summary>

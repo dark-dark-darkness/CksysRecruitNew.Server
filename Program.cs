@@ -29,7 +29,6 @@ builder.Host.UseSerilog(new LoggerConfiguration().WriteTo.Async(c => {
 
 var services = builder.Services;
 
-services.AddSmtpClient();
 services.AddSwaggerGen(options => {
 
   options.AddSecurityDefinition("CksysRecruitNew.Server", new() {
@@ -37,10 +36,6 @@ services.AddSwaggerGen(options => {
     Name = "Authorization",
   });
 });
-
-services.AddSingleton<JwtHelper>();
-services.AddSingleton<AesHelper>();
-
 services.AddControllers()
         .ConfigureApiBehaviorOptions(options => {
           options.InvalidModelStateResponseFactory = (context) => {
@@ -59,7 +54,6 @@ services.AddControllers()
             });
           };
         });
-
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
           options.TokenValidationParameters = new TokenValidationParameters() {
@@ -68,21 +62,23 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,                                                                                                          //是否验证Audience
             ValidAudience = builder.Configuration[$"{JwtOptions.SectionKey}:Audience"],                                                       //订阅人Audience
             ValidateIssuerSigningKey = true,                                                                                                  //是否验证SecurityKey
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOptions.SectionKey}:SecretKey"])), //SecurityKey
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOptions.SectionKey}:SecretKey"]!)), //SecurityKey
             ValidateLifetime = true,                                                                                                          //是否验证失效时间
             ClockSkew = TimeSpan.FromSeconds(30),                                                                                             //过期时间容错值，解决服务器端时间不同步问题（秒）
             RequireExpirationTime = true,
           };
         });
-
 services.AddAuthorization();
-
 services.AddEndpointsApiExplorer();
+
+services.AddSingleton<JwtHelper>();
+services.AddSingleton<AesHelper>();
 services.AddScoped<SmsService>();
 services.AddScoped<EmailService>();
 services.AddScoped<IApplyInfoRepository, ApplyInfoRepository>();
-services.AddSqlSugarClient(builder.Configuration.GetConnectionString("Default"));
-services.AddFreeRedis(builder.Configuration["Redis"]);
+services.AddSmtpClient();
+services.AddSqlSugarClient(builder.Configuration.GetConnectionString("Default")!);
+services.AddFreeRedis(builder.Configuration["Redis"]!);
 
 services.Configure<JwtOptions>(options => builder.Configuration.GetSection(JwtOptions.SectionKey).Bind(options));
 services.Configure<AesOptions>(options => builder.Configuration.GetSection(AesOptions.SectionKey).Bind(options));
@@ -104,8 +100,6 @@ services.AddHsts(options => {
 
 var app = builder.Build();
 
-app.UseCors();
-
 if (app.Environment.IsDevelopment()) {
   app.UseSwagger();
   app.UseSwaggerUI();
@@ -123,6 +117,8 @@ if (app.Environment.IsDevelopment()) {
     });
   });
 }
+
+app.UseCors();
 
 app.InitDatabase(typeof(ApplyInfo), typeof(User));
 
@@ -145,20 +141,22 @@ app.MapPost("/api/login",
 
 if (app.Environment.IsDevelopment()) {
 
-  //app.MapPost("/test/{password}",
-  //    ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
+  app.MapPost("/test/{password}",
+      ([FromServices] AesHelper aesHelper, string password) => Result.Ok(aesHelper.Encrypt(password)));
 
-  //app.MapGet("/test/{phone}/{code}",
-  //    async ([FromServices] SmsService notifyService, string phone, string code) => {
-  //      try {
-  //        await notifyService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
-  //      } catch (Exception ex) {
-  //        Log.Error(ex, "消息发送失败");
-  //        throw;
-  //      }
-  //    });
+  app.MapGet("/test/{phone}/{code}",
+      async ([FromServices] SmsService notifyService, string phone, string code) => {
+        try {
+          await notifyService.SeedAsync(SmsSeedParameter.Captcha(phone, code));
+        } catch (Exception ex) {
+          Log.Error(ex, "消息发送失败");
+          throw;
+        }
+      });
 
-  //app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
+  app.MapGet("/test/applicant-token", (JwtHelper jwtHelper) => Results.Ok(jwtHelper.CreateToken("test_applicant", "applicant")));
+
+  app.MapGet("/test/ping", () => Result.Ok(DateTime.Now));
 }
 
 app.MapControllers();

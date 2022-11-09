@@ -12,7 +12,7 @@ namespace CksysRecruitNew.Server.Helper;
 /// <summary>
 /// jwt生成帮助类
 /// </summary>
-public class JwtHelper {
+public sealed class JwtHelper {
   private readonly JwtOptions _options;
 
   /// <summary>

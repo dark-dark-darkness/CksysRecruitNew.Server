@@ -52,5 +52,5 @@ public class Result<T> {
     };
 }
 
-public class Result : Result<object> {
+public sealed class Result : Result<object> {
 }

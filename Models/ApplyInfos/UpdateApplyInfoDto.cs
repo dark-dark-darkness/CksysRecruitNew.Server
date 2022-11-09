@@ -4,7 +4,7 @@ using CksysRecruitNew.Server.Entities;
 
 namespace CksysRecruitNew.Server.Models.ApplyInfos;
 
-public class UpdateApplyInfoDto {
+public sealed class UpdateApplyInfoDto {
   [Display(Name = "学号")]
   [Required(ErrorMessage = "请填写{0}")]
   [RegularExpression(@"\d{10}", ErrorMessage = "请输入正确的{0}！")]

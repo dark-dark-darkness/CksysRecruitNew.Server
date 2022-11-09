@@ -13,7 +13,7 @@ using SqlSugar;
 namespace CksysRecruitNew.Server.Controllers;
 
 [Route("api/captcha")]
-public class CaptchaController : ControllerBase {
+public sealed class CaptchaController : ControllerBase {
 
   private readonly SmsService _smsService;
 

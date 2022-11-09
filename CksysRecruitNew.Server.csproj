@@ -1,24 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <LangVersion>preview</LangVersion>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <LangVersion>preview</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove=".dockerignore" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Remove=".dockerignore"/>
+    </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AlibabaCloud.SDK.Dysmsapi20170525" Version="2.0.22" />
@@ -46,6 +46,10 @@
     <GenerateDocumentationFile>False</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <ProjectExtensions><VisualStudio><UserProperties secret_1json__JsonSchema="https://beaujs.com/schema.json" /></VisualStudio></ProjectExtensions>
+    <ProjectExtensions>
+        <VisualStudio>
+            <UserProperties secret_1json__JsonSchema="https://beaujs.com/schema.json"/>
+        </VisualStudio>
+    </ProjectExtensions>
 
 </Project>

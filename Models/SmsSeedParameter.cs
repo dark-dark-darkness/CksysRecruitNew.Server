@@ -17,7 +17,7 @@ public sealed class SmsSeedParameter {
       SignName = "liangjs",
       TemplateCode = "SMS_256725470",
       Phone = phone,
-      ParameterString = $$"""{"code":{{code}}}""",
+      ParameterString = $$"""{"code":{{ code}} }""" ,
     };
 
 }

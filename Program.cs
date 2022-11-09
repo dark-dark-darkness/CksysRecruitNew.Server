@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 using Serilog;
 
@@ -30,8 +31,7 @@ builder.Host.UseSerilog(new LoggerConfiguration().WriteTo.Async(c => {
 var services = builder.Services;
 
 services.AddSwaggerGen(options => {
-
-  options.AddSecurityDefinition("CksysRecruitNew.Server", new() {
+  options.AddSecurityDefinition("CksysRecruitNew.Server", new OpenApiSecurityScheme {
     Description = "JWT授权(数据将在请求头中进行传输) 直接在下框中输入Bearer {token}（注意两者之间是一个空格）\"",
     Name = "Authorization",
   });

@@ -22,7 +22,7 @@ public sealed class SmsService {
       SignName = parameter.SignName,
       TemplateCode = parameter.TemplateCode,
       PhoneNumbers = parameter.Phone,
-      TemplateParam = parameter.ParameterString
+      TemplateParam = parameter.ParameterString,
     };
 
     var runtime = new AlibabaCloud.TeaUtil.Models.RuntimeOptions();

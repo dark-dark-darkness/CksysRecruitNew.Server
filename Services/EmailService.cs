@@ -28,7 +28,7 @@ public sealed class EmailService {
 
     message.From.Add(new MailboxAddress(_options.Name, _options.Address));
 
-    message.To.Add(new MailboxAddress("申请人", name));
+    message.To.Add(new MailboxAddress(_options.Name, email));
 
     message.Subject = "创客实验室招新";
 
@@ -40,7 +40,6 @@ public sealed class EmailService {
 
     await _smtpClient.SendAsync(message);
 
-    _logger.LogInformation("Send to {Name}({Address}) success", name, email);
 
     return true;
   }

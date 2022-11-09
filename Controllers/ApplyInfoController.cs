@@ -55,9 +55,9 @@ public sealed class ApplyInfoController : ControllerBase {
   [HttpGet("exist")]
   public async Task<Result> ExistAsync(string? id, string? phone) {
     var expr = Expressionable.Create<ApplyInfo>()
-      .OrIF(!string.IsNullOrWhiteSpace(id), info => info.Id == id)
-      .OrIF(!string.IsNullOrWhiteSpace(phone), info => info.Phone == phone)
-      .ToExpression();
+                             .OrIF(!string.IsNullOrWhiteSpace(id), info => info.Id == id)
+                             .OrIF(!string.IsNullOrWhiteSpace(phone), info => info.Phone == phone)
+                             .ToExpression();
 
     var result = await _repository.ExistsAsync(expr);
     return Result.Ok(result);
@@ -93,7 +93,7 @@ public sealed class ApplyInfoController : ControllerBase {
     var totalAsync = new RefAsync<int>();
     var page = await _repository.GetManyAsync(whereDto.ToExpression(), pageNumber, pageSize, totalAsync, scoreOrderBy);
     if (totalAsync.Value is 0) return Result<ApplyInfoPageDto>.NotFound("没有找到符合条件的数据");
-    return Result<ApplyInfoPageDto>.Ok(new() { Page = page, PageNumber = pageNumber, PageSize = pageSize, Total = totalAsync.Value });
+    return Result<ApplyInfoPageDto>.Ok(new ApplyInfoPageDto { Page = page, PageNumber = pageNumber, PageSize = pageSize, Total = totalAsync.Value });
   }
 
   /// <summary>
@@ -142,6 +142,7 @@ public sealed class ApplyInfoController : ControllerBase {
   #endregion
 
   #region 申请人接口
+
   /// <summary>
   /// 提交申请信息
   /// </summary>
@@ -164,7 +165,7 @@ public sealed class ApplyInfoController : ControllerBase {
     //  throw;
     //}
 
-    return result ? Result.Ok(result) : Result.BadRequest();
+    return Result.Ok(result);
   }
 
   /// <summary>

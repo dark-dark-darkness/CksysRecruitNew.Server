@@ -17,9 +17,11 @@ public interface IApplyInfoRepository {
 
   public Task<ApplyInfo?> GetAsync(Expression<Func<ApplyInfo, bool>> whereExpr);
 
-  public Task<List<ApplyInfo>> GetManyAsync(ApplyInfo? info = null, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null, OrderBy orderByScore = OrderBy.None);
+  public Task<List<ApplyInfo>> GetManyAsync(ApplyInfo? info = null, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null,
+                                            OrderBy orderByScore = OrderBy.None);
 
-  public Task<List<ApplyInfo>> GetManyAsync(Expression<Func<ApplyInfo, bool>> whereExpr, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null, OrderBy orderByScore = OrderBy.None);
+  public Task<List<ApplyInfo>> GetManyAsync(Expression<Func<ApplyInfo, bool>> whereExpr, int pageNumber = 1, int pageSize = int.MaxValue, RefAsync<int>? total = null,
+                                            OrderBy orderByScore = OrderBy.None);
 
   public Task<bool> DeleteAsync(string phone);
 

@@ -32,9 +32,9 @@ public sealed class JwtHelper {
   public string CreateToken(string nameIdentifier, string role, int? expiresMinutes = default) {
     // 1. 定义需要使用到的Claims
     var claims = new[] {
-        new Claim(ClaimTypes.NameIdentifier, nameIdentifier),
-        new Claim(ClaimTypes.Role, role)
-      };
+      new Claim(ClaimTypes.NameIdentifier, nameIdentifier),
+      new Claim(ClaimTypes.Role, role),
+    };
 
     // 2. 从 appsettings.json 中读取SecretKey
     var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
@@ -47,12 +47,12 @@ public sealed class JwtHelper {
 
     // 5. 根据以上，生成token
     var jwtSecurityToken = new JwtSecurityToken(
-        _options.Issuer,                                     //Issuer
-        _options.Audience,                                   //Audience
-        claims,                                              //Claims,
-        DateTime.Now,                                        //notBefore
-        DateTime.Now.AddMinutes(expiresMinutes ?? _options.ExpiresMinutes),    //expires
-        signingCredentials                                   //Credentials
+        _options.Issuer,                                                    //Issuer
+        _options.Audience,                                                  //Audience
+        claims,                                                             //Claims,
+        DateTime.Now,                                                       //notBefore
+        DateTime.Now.AddMinutes(expiresMinutes ?? _options.ExpiresMinutes), //expires
+        signingCredentials                                                  //Credentials
     );
 
     // 6. 将token变为string

@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions {
         new SqlSugarScope(new ConnectionConfig {
           DbType = DbType.MySql,
           IsAutoCloseConnection = true,
-          ConnectionString = connectionString,
+          ConnectionString = connectionString
         }, db => {
           db.Aop.OnLogExecuting = (sql, parms) => {
             var logger = sp.GetRequiredService<ILogger<ISqlSugarClient>>();
@@ -50,7 +50,7 @@ public static class ServiceCollectionExtensions {
       var options = sp.GetRequiredService<IOptions<SmtpOptions>>().Value;
       var logger = sp.GetRequiredService<ILogger<ISmtpClient>>();
       var client = new SmtpClient {
-        ServerCertificateValidationCallback = (s, c, h, e) => true,
+        ServerCertificateValidationCallback = (s, c, h, e) => true
       };
       client.Connect(options.Host, options.Port, options.UseSsl);
       client.Authenticate(options.Username, options.Password);

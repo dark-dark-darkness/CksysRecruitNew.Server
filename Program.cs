@@ -33,41 +33,41 @@ var services = builder.Services;
 services.AddSwaggerGen(options => {
   options.AddSecurityDefinition("CksysRecruitNew.Server", new OpenApiSecurityScheme {
     Description = "JWT授权(数据将在请求头中进行传输) 直接在下框中输入Bearer {token}（注意两者之间是一个空格）\"",
-    Name = "Authorization",
+    Name = "Authorization"
   });
 });
 services.AddControllers()
         .ConfigureApiBehaviorOptions(options => {
-          options.InvalidModelStateResponseFactory = (context) => {
-            var problamDetails = new ValidationProblemDetails(context.ModelState) {
-              Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
-              Status = StatusCodes.Status422UnprocessableEntity,
-              Instance = context.HttpContext.Request.Path,
-            };
+           options.InvalidModelStateResponseFactory = (context) => {
+             var problamDetails = new ValidationProblemDetails(context.ModelState) {
+               Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+               Status = StatusCodes.Status422UnprocessableEntity,
+               Instance = context.HttpContext.Request.Path
+             };
 
-            problamDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+             problamDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
 
-            return new OkObjectResult(new {
-              Code = 422,
-              Message = "输入参数错误",
-              Errors = problamDetails.Errors
-            });
-          };
-        });
+             return new OkObjectResult(new {
+               Code = 422,
+               Message = "输入参数错误",
+               Errors = problamDetails.Errors
+             });
+           };
+         });
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
-          options.TokenValidationParameters = new TokenValidationParameters() {
-            ValidateIssuer = true,                                                                                                            //是否验证Issuer
-            ValidIssuer = builder.Configuration[$"{JwtOptions.SectionKey}:Issuer"],                                                           //发行人Issuer
-            ValidateAudience = true,                                                                                                          //是否验证Audience
-            ValidAudience = builder.Configuration[$"{JwtOptions.SectionKey}:Audience"],                                                       //订阅人Audience
-            ValidateIssuerSigningKey = true,                                                                                                  //是否验证SecurityKey
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOptions.SectionKey}:SecretKey"]!)), //SecurityKey
-            ValidateLifetime = true,                                                                                                          //是否验证失效时间
-            ClockSkew = TimeSpan.FromSeconds(30),                                                                                             //过期时间容错值，解决服务器端时间不同步问题（秒）
-            RequireExpirationTime = true,
-          };
-        });
+           options.TokenValidationParameters = new TokenValidationParameters() {
+             ValidateIssuer = true,                                                                                                             //是否验证Issuer
+             ValidIssuer = builder.Configuration[$"{JwtOptions.SectionKey}:Issuer"],                                                            //发行人Issuer
+             ValidateAudience = true,                                                                                                           //是否验证Audience
+             ValidAudience = builder.Configuration[$"{JwtOptions.SectionKey}:Audience"],                                                        //订阅人Audience
+             ValidateIssuerSigningKey = true,                                                                                                   //是否验证SecurityKey
+             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOptions.SectionKey}:SecretKey"]!)), //SecurityKey
+             ValidateLifetime = true,                                                                                                           //是否验证失效时间
+             ClockSkew = TimeSpan.FromSeconds(30),                                                                                              //过期时间容错值，解决服务器端时间不同步问题（秒）
+             RequireExpirationTime = true
+           };
+         });
 services.AddAuthorization();
 services.AddEndpointsApiExplorer();
 

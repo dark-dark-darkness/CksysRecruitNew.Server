@@ -33,7 +33,7 @@ public sealed class JwtHelper {
     // 1. 定义需要使用到的Claims
     var claims = new[] {
       new Claim(ClaimTypes.NameIdentifier, nameIdentifier),
-      new Claim(ClaimTypes.Role, role),
+      new Claim(ClaimTypes.Role, role)
     };
 
     // 2. 从 appsettings.json 中读取SecretKey

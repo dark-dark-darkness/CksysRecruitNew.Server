@@ -3,5 +3,5 @@
 public enum OrderBy {
   None = 0,
   Asc = 1,
-  Desc = 2,
+  Desc = 2
 }

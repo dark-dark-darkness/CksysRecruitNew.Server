@@ -39,7 +39,7 @@ public sealed class CreateApplyInfoDto {
       ClassName = ClassName,
       Phone = phone,
       Email = Email,
-      Profile = Profile,
+      Profile = Profile
     };
 
 }

@@ -12,35 +12,35 @@ public class Result<T> {
     => new() {
       Code = 200,
       Message = "操作成功",
-      Data = data,
+      Data = data
     };
 
   public static Result<T> NotFound(string message = "未找到！", T? data = default)
     => new() {
       Code = 404,
       Message = message,
-      Data = data,
+      Data = data
     };
 
   public static Result<T> Error(string message = "未处理错误！", T? data = default)
     => new() {
       Code = 500,
       Message = message,
-      Data = data,
+      Data = data
     };
 
   public static Result<T> Created(string message = "成功创建！", T? data = default)
     => new() {
       Code = 201,
       Message = message,
-      Data = data,
+      Data = data
     };
 
   public static Result<T> BadRequest(string message = "请求错误", T? data = default)
     => new() {
       Code = 400,
       Message = message,
-      Data = data,
+      Data = data
     };
 
 
@@ -48,9 +48,9 @@ public class Result<T> {
     => new() {
       Code = result.Code,
       Message = result.Message,
-      Data = result.Data,
+      Data = result.Data
     };
 }
 
-public sealed class Result : Result<object> {
+public sealed class Result:Result<object> {
 }

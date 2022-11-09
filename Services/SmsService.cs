@@ -22,7 +22,7 @@ public sealed class SmsService {
       SignName = parameter.SignName,
       TemplateCode = parameter.TemplateCode,
       PhoneNumbers = parameter.Phone,
-      TemplateParam = parameter.ParameterString,
+      TemplateParam = parameter.ParameterString
     };
 
     var runtime = new AlibabaCloud.TeaUtil.Models.RuntimeOptions();
@@ -38,7 +38,7 @@ public sealed class SmsService {
       // 您的 AccessKey ID
       AccessKeyId = accessKeyId,
       // 您的 AccessKey Secret
-      AccessKeySecret = accessKeySecret,
+      AccessKeySecret = accessKeySecret
     };
 
     // 访问的域名

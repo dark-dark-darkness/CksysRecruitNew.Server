@@ -38,6 +38,6 @@ public sealed class UpdateApplyInfoDto {
       Name = Name,
       ClassName = ClassName,
       Email = Email,
-      Profile = Profile,
+      Profile = Profile
     };
 }

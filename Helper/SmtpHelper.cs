@@ -19,9 +19,10 @@ public sealed class SmtpHelper {
 
   public ISmtpClient? CreateOrDefault() {
     var client = new SmtpClient {
-      ServerCertificateValidationCallback = (s, c, h, e) => true,
+      ServerCertificateValidationCallback = (s, c, h, e) => true
     };
     client.AuthenticationMechanisms.Remove("XOAUTH2");
+
     try {
       client.Connect(_options.Host, _options.Port, _options.UseSsl);
       client.Authenticate(_options.Username, _options.Password);

@@ -33,14 +33,14 @@ public sealed class SearchApplyInfoDto {
 
   public Expression<Func<ApplyInfo, bool>> ToExpression()
     => Expressionable.Create<ApplyInfo>()
-                    .AndIF(!string.IsNullOrWhiteSpace(Id), e => e.Id.Contains(Id))
-                    .AndIF(!string.IsNullOrWhiteSpace(Name), e => e.Name.Contains(Name))
-                    .AndIF(!string.IsNullOrWhiteSpace(ClassName), e => e.ClassName.Contains(ClassName))
-                    .AndIF(!string.IsNullOrWhiteSpace(Phone), e => e.Phone.Contains(Phone))
-                    .AndIF(!string.IsNullOrWhiteSpace(Email), e => e.Email.Contains(Email))
-                    .AndIF(MinScore is not 0, e => e.Score >= MinScore)
-                    .AndIF(MaxScore is not 0, e => e.Score <= MaxScore)
-                    .ToExpression();
+                     .AndIF(!string.IsNullOrWhiteSpace(Id), e => e.Id.Contains(Id))
+                     .AndIF(!string.IsNullOrWhiteSpace(Name), e => e.Name.Contains(Name))
+                     .AndIF(!string.IsNullOrWhiteSpace(ClassName), e => e.ClassName.Contains(ClassName))
+                     .AndIF(!string.IsNullOrWhiteSpace(Phone), e => e.Phone.Contains(Phone))
+                     .AndIF(!string.IsNullOrWhiteSpace(Email), e => e.Email.Contains(Email))
+                     .AndIF(MinScore is not 0, e => e.Score >= MinScore)
+                     .AndIF(MaxScore is not 0, e => e.Score <= MaxScore)
+                     .ToExpression();
 
 
 }

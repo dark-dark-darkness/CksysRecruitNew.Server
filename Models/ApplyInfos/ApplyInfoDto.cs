@@ -35,7 +35,7 @@ public sealed class ApplyInfoDto {
       Phone = entity.Phone,
       Email = entity.Email,
       Profile = entity.Profile,
-      Score = entity.Score,
+      Score = entity.Score
     };
 
 }

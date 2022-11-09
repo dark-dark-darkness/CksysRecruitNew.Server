@@ -20,9 +20,9 @@ namespace CksysRecruitNew.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/apply-info")]
-public sealed class ApplyInfoController : ControllerBase {
+public sealed class ApplyInfoController:ControllerBase {
 
-  #region 私有字段+构造函数
+#region 私有字段+构造函数
 
   private readonly IApplyInfoRepository _repository;
   private readonly EmailService _notify;
@@ -42,9 +42,9 @@ public sealed class ApplyInfoController : ControllerBase {
     _db = db;
   }
 
-  #endregion
+#endregion
 
-  #region 公开接口
+#region 公开接口
 
   /// <summary>
   /// 判断手机号为phone的申请信息是否存在
@@ -63,9 +63,9 @@ public sealed class ApplyInfoController : ControllerBase {
     return Result.Ok(result);
   }
 
-  #endregion
+#endregion
 
-  #region 管理员接口
+#region 管理员接口
 
   /// <summary>
   /// 获取申请信息详细信息
@@ -139,9 +139,9 @@ public sealed class ApplyInfoController : ControllerBase {
     return File(ms, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"data-{DateTime.Now}");
   }
 
-  #endregion
+#endregion
 
-  #region 申请人接口
+#region 申请人接口
 
   /// <summary>
   /// 提交申请信息
@@ -189,6 +189,7 @@ public sealed class ApplyInfoController : ControllerBase {
   [Authorize(Roles = "applicant")]
   public async Task<Result> UpdateByAuthAsync(UpdateApplyInfoDto dto) {
     var phone = HttpContext.User.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value ?? "";
+
     if (await _repository.ExistsAsync(phone)) {
       var e = dto.ToEntity(phone);
       await _repository.UpdateAsync(e);
@@ -197,9 +198,9 @@ public sealed class ApplyInfoController : ControllerBase {
     return Result.NotFound($"手机号为{phone}的申请不存在");
   }
 
-  #endregion
+#endregion
 
-  #region 管理员报表接口
+#region 管理员报表接口
 
   /// <summary>
   /// 根据分数分桶统计
@@ -218,9 +219,9 @@ public sealed class ApplyInfoController : ControllerBase {
                  .GroupBy((x1, x2) => x2.ColumnName)
                  .OrderBy((x1, x2) => x2.ColumnName)
                  .Select((x1, x2) => new {
-                   ScoreInterval = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
-                   Count = SqlFunc.AggregateCount(1),
-                 })
+                    ScoreInterval = "[" + x2.ColumnName.ToString() + "," + (x2.ColumnName + span).ToString() + ")",
+                    Count = SqlFunc.AggregateCount(1)
+                  })
                  .ToListAsync();
 
     return Result.Ok(result);
@@ -238,14 +239,14 @@ public sealed class ApplyInfoController : ControllerBase {
         await _db.Queryable<ApplyInfo>()
                  .GroupBy(info => info.ClassName)
                  .Select(info => new {
-                   ClassName = info.ClassName,
-                   Count = SqlFunc.AggregateCount(1),
-                 })
+                    ClassName = info.ClassName,
+                    Count = SqlFunc.AggregateCount(1)
+                  })
                  .ToListAsync();
 
     return Result.Ok(result);
   }
 
-  #endregion
+#endregion
 
 }
